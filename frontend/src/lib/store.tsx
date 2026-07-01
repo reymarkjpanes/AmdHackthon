@@ -1,0 +1,148 @@
+import {
+  createContext,
+  useContext,
+  useReducer,
+  type Dispatch,
+  type ReactNode,
+} from 'react';
+import type { Analysis, UploadedDocument } from './types';
+
+// The demo session ID used by the backend demo endpoint
+export const DEMO_SESSION_ID = 'demo-session-amd-mi300x-2026';
+
+const STORAGE_KEY = 'clausify_session';
+
+// ── State shape ────────────────────────────────────────────────────────────────
+
+export interface AppState {
+  sessionId: string | null;
+  documents: UploadedDocument[];
+  analysis: Analysis | null;
+  isLoading: boolean;
+  error: string | null;
+  isDemo: boolean;
+}
+
+const initialState: AppState = {
+  sessionId: null,
+  documents: [],
+  analysis: null,
+  isLoading: false,
+  error: null,
+  isDemo: false,
+};
+
+// ── localStorage persistence ───────────────────────────────────────────────────
+
+function loadPersistedState(): AppState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialState;
+    const saved = JSON.parse(raw) as Partial<AppState>;
+    if (!saved.sessionId) return initialState;
+    return {
+      sessionId: saved.sessionId ?? null,
+      documents: saved.documents ?? [],
+      analysis: saved.analysis ?? null,
+      isLoading: false,
+      error: null,
+      isDemo: saved.sessionId === DEMO_SESSION_ID,
+    };
+  } catch {
+    return initialState;
+  }
+}
+
+function persistState(state: AppState): void {
+  try {
+    if (!state.sessionId) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      sessionId: state.sessionId,
+      documents: state.documents,
+      analysis: state.analysis,
+    }));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────────
+
+export type AppAction =
+  | { type: 'SET_SESSION'; payload: string }
+  | { type: 'SET_DOCUMENTS'; payload: UploadedDocument[] }
+  | { type: 'SET_ANALYSIS'; payload: Analysis }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'RESET' };
+
+// ── Reducer ────────────────────────────────────────────────────────────────────
+
+function appReducer(state: AppState, action: AppAction): AppState {
+  let newState: AppState;
+
+  switch (action.type) {
+    case 'SET_SESSION': {
+      const isDemo = action.payload === DEMO_SESSION_ID;
+      newState = { ...state, sessionId: action.payload, isDemo };
+      break;
+    }
+    case 'SET_DOCUMENTS':
+      newState = { ...state, documents: action.payload };
+      break;
+    case 'SET_ANALYSIS':
+      newState = { ...state, analysis: action.payload };
+      break;
+    case 'SET_LOADING':
+      newState = { ...state, isLoading: action.payload };
+      break;
+    case 'SET_ERROR':
+      newState = { ...state, error: action.payload };
+      break;
+    case 'RESET':
+      newState = { ...initialState };
+      break;
+    default:
+      return state;
+  }
+
+  // Persist after every state change
+  persistState(newState);
+  return newState;
+}
+
+// ── Contexts ───────────────────────────────────────────────────────────────────
+
+const AppStateContext = createContext<AppState | null>(null);
+const AppDispatchContext = createContext<Dispatch<AppAction> | null>(null);
+
+// ── Provider ───────────────────────────────────────────────────────────────────
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(appReducer, undefined, loadPersistedState);
+
+  return (
+    <AppStateContext.Provider value={state}>
+      <AppDispatchContext.Provider value={dispatch}>
+        {children}
+      </AppDispatchContext.Provider>
+    </AppStateContext.Provider>
+  );
+}
+
+// ── Hooks ──────────────────────────────────────────────────────────────────────
+
+export function useAppState(): AppState {
+  const ctx = useContext(AppStateContext);
+  if (!ctx) throw new Error('useAppState must be used inside AppProvider');
+  return ctx;
+}
+
+export function useAppDispatch(): Dispatch<AppAction> {
+  const ctx = useContext(AppDispatchContext);
+  if (!ctx) throw new Error('useAppDispatch must be used inside AppProvider');
+  return ctx;
+}
