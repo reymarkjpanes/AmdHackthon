@@ -160,6 +160,10 @@ async def startup_event():
         pdf_generator = PDFGenerator()
         logger.info("PDFGenerator initialized")
 
+        from services.docx_generator import DOCXGenerator
+        docx_generator = DOCXGenerator()
+        logger.info("DOCXGenerator initialized")
+
         # --- Inject services into routers ---
         upload._document_parser = document_parser
         upload._embedding_service = embedding_service
@@ -176,6 +180,7 @@ async def startup_event():
         chat._llm_service = llm_service
 
         report._pdf_generator = pdf_generator
+        report._docx_generator = docx_generator
         report._session_manager = session_manager
 
         logger.info("All services initialized — Clausify AI is ready!")

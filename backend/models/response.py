@@ -110,7 +110,7 @@ class Evidence(BaseModel):
 
     quote: str  # max 200 chars (enforced in router)
     sourceDocument: str
-    documentType: Literal["pdf", "image"]
+    documentType: Literal["pdf", "image", "document"]
 
 
 class StructuredAIResponse(BaseModel):

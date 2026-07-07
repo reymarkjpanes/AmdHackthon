@@ -115,8 +115,8 @@ class AnalysisService:
             return_exceptions=True,
         )
 
-        # Small delay between batches to respect rate limits
-        await asyncio.sleep(0.5)
+        # Small delay between batches (reduced for Fireworks AI — no strict rate limit)
+        await asyncio.sleep(0.1)
 
         # Batch 2: matrix, recommendation, conflicts (heavier calls)
         (

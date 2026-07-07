@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div
           style={{
             minHeight: "100vh",
-            background: "#080D1A",
+            background: "var(--ink)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
         >
           <div
             style={{
-              background: "#0D1528",
+              background: "var(--lead)",
               border: "1px solid rgba(239,68,68,0.3)",
               borderRadius: "12px",
               padding: "32px",
@@ -52,10 +52,10 @@ export class ErrorBoundary extends Component<Props, State> {
             <div style={{ fontSize: "32px", marginBottom: "16px" }}>⚠️</div>
             <h2
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "'DM Sans', sans-serif",
                 fontSize: "20px",
-                fontWeight: 600,
-                color: "#F0F4FF",
+                fontWeight: 700,
+                color: "var(--paper)",
                 marginBottom: "8px",
               }}
             >
@@ -63,9 +63,9 @@ export class ErrorBoundary extends Component<Props, State> {
             </h2>
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: "14px",
-                color: "#8B9CC8",
+                color: "var(--ash)",
                 marginBottom: "20px",
                 lineHeight: 1.6,
               }}
@@ -75,12 +75,12 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               onClick={() => window.location.reload()}
               style={{
-                background: "#3B7BF6",
-                color: "#fff",
+                background: "var(--volt)",
+                color: "var(--ink)",
                 border: "none",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-btn)",
                 padding: "10px 24px",
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: "14px",
                 fontWeight: 500,
                 cursor: "pointer",

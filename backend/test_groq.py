@@ -30,6 +30,6 @@ async def main():
         max_tokens=300
     )
     print("Response:", result[:400])
-    print("\n✅ Groq is working!" if "executiveSummary" in result or "{" in result else "\n⚠️  Unexpected response format")
+    print("\n✅ Groq is working!" if "executiveSummary" in result or "{" in result else "\n  Unexpected response format")
 
 asyncio.run(main())

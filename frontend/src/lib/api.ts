@@ -96,15 +96,19 @@ export async function sendChatMessage(
 /**
  * Export the analysis report as a downloadable Blob.
  * POST /api/report
+ * Supports "pdf" and "docx" formats.
  */
-export async function exportReport(sessionId: string): Promise<Blob> {
+export async function exportReport(
+  sessionId: string,
+  format: 'pdf' | 'docx' = 'pdf',
+): Promise<Blob> {
   const url = `${API_BASE_URL}/api/report`;
-  console.log(`[API] POST ${url} — sessionId=${sessionId}`);
+  console.log(`[API] POST ${url} — sessionId=${sessionId}, format=${format}`);
 
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId }),
+    body: JSON.stringify({ sessionId, format }),
   });
 
   console.log(`[API] POST ${url} → ${response.status}`);

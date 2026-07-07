@@ -6,7 +6,7 @@ from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
+from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
     HRFlowable,
     KeepTogether,
@@ -22,515 +22,528 @@ from models.response import AnalysisResult
 
 logger = logging.getLogger(__name__)
 
-# AMD brand color
+# ─── Color Palette ───────────────────────────────────────────────────────────
+# Primary
 AMD_RED = colors.HexColor("#ED1C24")
-AMD_DARK = colors.HexColor("#1a1a2e")
-AMD_LIGHT_GRAY = colors.HexColor("#f5f5f5")
-AMD_MED_GRAY = colors.HexColor("#e0e0e0")
+AMD_DARK = colors.HexColor("#0f1923")
+# Neutrals
+SLATE_900 = colors.HexColor("#1e293b")
+SLATE_700 = colors.HexColor("#334155")
+SLATE_500 = colors.HexColor("#64748b")
+SLATE_300 = colors.HexColor("#cbd5e1")
+SLATE_100 = colors.HexColor("#f1f5f9")
+SLATE_50 = colors.HexColor("#f8fafc")
 WHITE = colors.white
-BLACK = colors.black
+BLACK = colors.HexColor("#0f172a")
+# Semantic
+GREEN_600 = colors.HexColor("#16a34a")
+GREEN_50 = colors.HexColor("#f0fdf4")
+AMBER_600 = colors.HexColor("#d97706")
+AMBER_50 = colors.HexColor("#fffbeb")
+RED_50 = colors.HexColor("#fef2f2")
+BLUE_700 = colors.HexColor("#1d4ed8")
+CYAN_500 = colors.HexColor("#06b6d4")
 
-def _color_to_hex(color) -> str:
+
+def _hex(color) -> str:
     """Convert a ReportLab color to a 6-digit hex string (no #)."""
-    r = int(color.red * 255)
-    g = int(color.green * 255)
-    b = int(color.blue * 255)
-    return f"{r:02x}{g:02x}{b:02x}"
+    return f"{int(color.red*255):02x}{int(color.green*255):02x}{int(color.blue*255):02x}"
 
 
 class PDFGenerator:
     """
-    Generates AMD-branded PDF reports from AnalysisResult data using ReportLab.
+    Generates modern, professionally-designed PDF reports from AnalysisResult data.
+    Uses a clean slate/dark color palette with AMD red accents.
     """
 
-    AMD_RED = "#ED1C24"  # spec: AMD_RED = "#ED1C24"
+    AMD_RED = "#ED1C24"
 
     def __init__(self):
         self.styles = getSampleStyleSheet()
-        self._build_custom_styles()
+        self._build_styles()
 
-    def _build_custom_styles(self):
-        """Define custom paragraph styles for the report."""
-        self.title_style = ParagraphStyle(
-            "DFTitle",
-            parent=self.styles["Title"],
-            fontSize=28,
-            textColor=WHITE,
-            alignment=TA_CENTER,
-            spaceAfter=12,
-            fontName="Helvetica-Bold",
+    def _build_styles(self):
+        """Define custom paragraph styles."""
+        self.title = ParagraphStyle(
+            "RTitle", parent=self.styles["Title"],
+            fontSize=32, textColor=WHITE, alignment=TA_CENTER,
+            spaceAfter=8, fontName="Helvetica-Bold", leading=38,
         )
-        self.subtitle_style = ParagraphStyle(
-            "DFSubtitle",
-            parent=self.styles["Normal"],
-            fontSize=14,
-            textColor=AMD_RED,
-            alignment=TA_CENTER,
-            spaceAfter=8,
-            fontName="Helvetica-Bold",
+        self.subtitle = ParagraphStyle(
+            "RSub", parent=self.styles["Normal"],
+            fontSize=13, textColor=SLATE_300, alignment=TA_CENTER,
+            spaceAfter=6, fontName="Helvetica",
         )
-        self.section_header_style = ParagraphStyle(
-            "DFSection",
-            parent=self.styles["Heading1"],
-            fontSize=14,
-            textColor=AMD_RED,
-            fontName="Helvetica-Bold",
-            spaceBefore=16,
-            spaceAfter=8,
-            borderPad=4,
+        self.section = ParagraphStyle(
+            "RSec", parent=self.styles["Heading1"],
+            fontSize=15, textColor=SLATE_900, fontName="Helvetica-Bold",
+            spaceBefore=20, spaceAfter=6,
         )
-        self.body_style = ParagraphStyle(
-            "DFBody",
-            parent=self.styles["Normal"],
-            fontSize=10,
-            textColor=BLACK,
-            fontName="Helvetica",
-            spaceAfter=6,
-            leading=14,
+        self.body = ParagraphStyle(
+            "RBody", parent=self.styles["Normal"],
+            fontSize=10, textColor=SLATE_700, fontName="Helvetica",
+            spaceAfter=6, leading=15,
         )
-        self.label_style = ParagraphStyle(
-            "DFLabel",
-            parent=self.styles["Normal"],
-            fontSize=9,
-            textColor=colors.HexColor("#666666"),
+        self.body_bold = ParagraphStyle(
+            "RBodyB", parent=self.body,
+            fontName="Helvetica-Bold", textColor=SLATE_900,
+        )
+        self.small = ParagraphStyle(
+            "RSmall", parent=self.styles["Normal"],
+            fontSize=9, textColor=SLATE_500, fontName="Helvetica",
+        )
+        self.footer = ParagraphStyle(
+            "RFoot", parent=self.styles["Normal"],
+            fontSize=8, textColor=SLATE_500, alignment=TA_CENTER,
             fontName="Helvetica",
         )
-        self.footer_style = ParagraphStyle(
-            "DFFooter",
-            parent=self.styles["Normal"],
-            fontSize=8,
-            textColor=colors.HexColor("#999999"),
-            alignment=TA_CENTER,
-            fontName="Helvetica",
+        self.metric_label = ParagraphStyle(
+            "RMetL", parent=self.styles["Normal"],
+            fontSize=8, textColor=SLATE_500, alignment=TA_CENTER,
+            fontName="Helvetica-Bold", leading=11,
+        )
+        self.metric_value = ParagraphStyle(
+            "RMetV", parent=self.styles["Normal"],
+            fontSize=22, textColor=SLATE_900, alignment=TA_CENTER,
+            fontName="Helvetica-Bold", leading=26,
         )
 
     def generate_report(self, analysis: AnalysisResult, session_id: str) -> bytes:
-        """
-        Generate a complete PDF report from an AnalysisResult.
-
-        Args:
-            analysis: Completed AnalysisResult with all analysis data
-            session_id: Session identifier (used in footer)
-
-        Returns:
-            PDF file as bytes
-
-        Raises:
-            Exception: If PDF generation fails
-        """
+        """Generate a complete PDF report."""
         buffer = io.BytesIO()
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.utcnow().strftime("%B %d, %Y")
 
         doc = SimpleDocTemplate(
-            buffer,
-            pagesize=A4,
-            rightMargin=2 * cm,
-            leftMargin=2 * cm,
-            topMargin=2 * cm,
-            bottomMargin=2 * cm,
-            title="Clausify AI — Document Intelligence Report",
+            buffer, pagesize=A4,
+            rightMargin=2 * cm, leftMargin=2 * cm,
+            topMargin=2 * cm, bottomMargin=2 * cm,
+            title="Clausify AI - Document Intelligence Report",
             author="Clausify AI",
         )
 
         story = []
-
-        # === TITLE PAGE ===
-        story.extend(self._build_title_page(today, session_id))
+        story.extend(self._title_page(today, session_id))
         story.append(PageBreak())
-
-        # === EXECUTIVE SUMMARY ===
-        story.extend(self._build_executive_summary(analysis))
-
-        # === RISK ANALYSIS TABLE ===
-        story.extend(self._build_risk_table(analysis))
-
-        # === COMPARISON MATRIX ===
-        story.extend(self._build_comparison_matrix(analysis))
-
-        # === DETECTED CONFLICTS ===
-        story.extend(self._build_conflicts_section(analysis))
-
-        # === RECOMMENDATION ===
-        story.extend(self._build_recommendation_section(analysis))
+        story.extend(self._analytics_dashboard(analysis))
+        story.extend(self._executive_summary(analysis))
+        story.extend(self._risk_analysis(analysis))
+        if analysis.comparisonMatrix:
+            story.extend(self._comparison_matrix(analysis))
+        if analysis.conflicts:
+            story.extend(self._conflicts(analysis))
+        story.extend(self._recommendation(analysis))
+        story.extend(self._footer_block())
 
         doc.build(story)
         pdf_bytes = buffer.getvalue()
         buffer.close()
-
-        logger.info(
-            f"PDF report generated for session {session_id} ({len(pdf_bytes)} bytes)"
-        )
+        logger.info(f"PDF generated for session {session_id} ({len(pdf_bytes)} bytes)")
         return pdf_bytes
 
-    def _build_title_page(self, today: str, session_id: str) -> list:
-        """Build the title page elements."""
+    def _title_page(self, today: str, session_id: str) -> list:
+        """Build a modern title page with gradient-style dark header."""
         elements = []
+        elements.append(Spacer(1, 4 * cm))
 
-        # Dark header background effect using a colored table
+        # Main title block
         title_data = [
-            [Paragraph("Clausify AI", self.title_style)],
-            [Paragraph("Document Intelligence Report", self.subtitle_style)],
+            [Paragraph("CLAUSIFY AI", self.title)],
+            [Paragraph("Document Intelligence Report", self.subtitle)],
+            [Spacer(1, 0.3 * cm)],
+            [Paragraph(
+                f'<font color="#{_hex(AMD_RED)}">Powered by AMD Instinct MI300X</font>',
+                ParagraphStyle("Badge", parent=self.subtitle, fontSize=10,
+                               fontName="Helvetica-Bold", textColor=AMD_RED),
+            )],
         ]
         title_table = Table(title_data, colWidths=[16 * cm])
-        title_table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), AMD_DARK),
-                ("TOPPADDING", (0, 0), (-1, -1), 24),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 24),
-                ("LEFTPADDING", (0, 0), (-1, -1), 16),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 16),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ])
-        )
-        elements.append(Spacer(1, 3 * cm))
+        title_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), AMD_DARK),
+            ("TOPPADDING", (0, 0), (0, 0), 36),
+            ("BOTTOMPADDING", (0, -1), (-1, -1), 28),
+            ("LEFTPADDING", (0, 0), (-1, -1), 20),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 20),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("ROUNDEDCORNERS", [8, 8, 8, 8]),
+        ]))
         elements.append(title_table)
-        elements.append(Spacer(1, 1 * cm))
+        elements.append(Spacer(1, 1.5 * cm))
 
-        # AMD badge
-        amd_data = [
-            [Paragraph("⚡ Powered by AMD MI300X", ParagraphStyle(
-                "AMDBadge",
-                parent=self.styles["Normal"],
-                fontSize=12,
-                textColor=AMD_RED,
-                alignment=TA_CENTER,
-                fontName="Helvetica-Bold",
-            ))]
+        # Metadata card
+        sid_display = session_id[:8] + "..." if len(session_id) > 8 else session_id
+        meta_data = [
+            [Paragraph("<b>Report Date</b>", self.small),
+             Paragraph("<b>Session</b>", self.small),
+             Paragraph("<b>Platform</b>", self.small)],
+            [Paragraph(today, self.body),
+             Paragraph(sid_display, self.body),
+             Paragraph("Clausify AI v1.0", self.body)],
         ]
-        amd_table = Table(amd_data, colWidths=[16 * cm])
-        amd_table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#fff0f0")),
-                ("TOPPADDING", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                ("BOX", (0, 0), (-1, -1), 1.5, AMD_RED),
-            ])
-        )
-        elements.append(amd_table)
-        elements.append(Spacer(1, 2 * cm))
-
-        # Report metadata
-        meta_info = [
-            ["Generated:", today],
-            ["Session ID:", session_id[:8] + "..." if len(session_id) > 8 else session_id],
-            ["Platform:", "Clausify AI v1.0.0"],
-        ]
-        meta_table = Table(meta_info, colWidths=[4 * cm, 12 * cm])
-        meta_table.setStyle(
-            TableStyle([
-                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
-                ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#666666")),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-            ])
-        )
+        meta_table = Table(meta_data, colWidths=[5.3 * cm, 5.3 * cm, 5.4 * cm])
+        meta_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), SLATE_50),
+            ("BOX", (0, 0), (-1, -1), 0.5, SLATE_300),
+            ("INNERGRID", (0, 0), (-1, -1), 0.5, SLATE_300),
+            ("TOPPADDING", (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+            ("LEFTPADDING", (0, 0), (-1, -1), 12),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]))
         elements.append(meta_table)
-        elements.append(Spacer(1, 1 * cm))
-        elements.append(HRFlowable(width="100%", thickness=2, color=AMD_RED))
-
         return elements
 
-    def _build_executive_summary(self, analysis: AnalysisResult) -> list:
-        """Build the executive summary section."""
+    def _analytics_dashboard(self, analysis: AnalysisResult) -> list:
+        """Build analytics dashboard with colored metric cards."""
         elements = []
-        elements.append(Paragraph("Executive Summary", self.section_header_style))
-        elements.append(HRFlowable(width="100%", thickness=1, color=AMD_MED_GRAY))
-        elements.append(Spacer(1, 0.3 * cm))
-        elements.append(Paragraph(analysis.executiveSummary, self.body_style))
+        elements.append(Paragraph("Analytics Dashboard", self.section))
+        elements.append(HRFlowable(width="100%", thickness=1.5, color=AMD_RED))
         elements.append(Spacer(1, 0.5 * cm))
+
+        # Calculate metrics
+        total_risks = len(analysis.risks)
+        high = len([r for r in analysis.risks if r.level == "HIGH"])
+        med = len([r for r in analysis.risks if r.level == "MEDIUM"])
+        low = len([r for r in analysis.risks if r.level == "LOW"])
+        conflicts = len(analysis.conflicts)
+        confidence = int(analysis.recommendation.confidence * 100)
+
+        # Determine colors for values
+        risk_color = AMD_RED if high > 0 else AMBER_600 if med > 0 else GREEN_600
+        conf_color = GREEN_600 if confidence >= 70 else AMBER_600 if confidence >= 40 else AMD_RED
+        conflict_color = AMD_RED if conflicts > 0 else GREEN_600
+
+        # Metric cards - 4 columns
+        labels_row = [
+            Paragraph("TOTAL RISKS", self.metric_label),
+            Paragraph("HIGH SEVERITY", self.metric_label),
+            Paragraph("CONFLICTS", self.metric_label),
+            Paragraph("AI CONFIDENCE", self.metric_label),
+        ]
+        values_row = [
+            Paragraph(f"<b>{total_risks}</b>", ParagraphStyle("V1", parent=self.metric_value, textColor=risk_color)),
+            Paragraph(f"<b>{high}</b>", ParagraphStyle("V2", parent=self.metric_value, textColor=AMD_RED if high > 0 else GREEN_600)),
+            Paragraph(f"<b>{conflicts}</b>", ParagraphStyle("V3", parent=self.metric_value, textColor=conflict_color)),
+            Paragraph(f"<b>{confidence}%</b>", ParagraphStyle("V4", parent=self.metric_value, textColor=conf_color)),
+        ]
+
+        metric_table = Table([values_row, labels_row], colWidths=[4 * cm] * 4)
+        metric_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), SLATE_50),
+            ("BOX", (0, 0), (-1, -1), 1, SLATE_300),
+            ("INNERGRID", (0, 0), (-1, -1), 0.5, SLATE_300),
+            ("TOPPADDING", (0, 0), (-1, 0), 14),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+            ("TOPPADDING", (0, 1), (-1, 1), 2),
+            ("BOTTOMPADDING", (0, 1), (-1, 1), 12),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ]))
+        elements.append(metric_table)
+        elements.append(Spacer(1, 0.5 * cm))
+
+        # Risk breakdown visual bar
+        if total_risks > 0:
+            breakdown_parts = []
+            if high > 0:
+                breakdown_parts.append(f'<font color="#{_hex(AMD_RED)}"><b>{high} HIGH</b></font>')
+            if med > 0:
+                breakdown_parts.append(f'<font color="#{_hex(AMBER_600)}"><b>{med} MEDIUM</b></font>')
+            if low > 0:
+                breakdown_parts.append(f'<font color="#{_hex(GREEN_600)}"><b>{low} LOW</b></font>')
+            elements.append(Paragraph(
+                f"Risk Breakdown:  {'  |  '.join(breakdown_parts)}", self.body
+            ))
+
+        # Categories
+        categories = sorted(set(r.category for r in analysis.risks))
+        if categories:
+            elements.append(Paragraph(
+                f"<b>Categories:</b> {', '.join(categories)}", self.body
+            ))
+
+        elements.append(Spacer(1, 0.8 * cm))
         return elements
 
-    def _build_risk_table(self, analysis: AnalysisResult) -> list:
-        """Build the risk analysis table section."""
+    def _executive_summary(self, analysis: AnalysisResult) -> list:
+        """Build executive summary with a subtle highlight box."""
         elements = []
-        elements.append(Paragraph("Risk Analysis", self.section_header_style))
-        elements.append(HRFlowable(width="100%", thickness=1, color=AMD_MED_GRAY))
+        elements.append(Paragraph("Executive Summary", self.section))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE_300))
+        elements.append(Spacer(1, 0.3 * cm))
+
+        # Summary in a light card
+        summary_data = [[Paragraph(analysis.executiveSummary, ParagraphStyle(
+            "SumBody", parent=self.body, leading=16, spaceAfter=0,
+        ))]]
+        summary_table = Table(summary_data, colWidths=[15.5 * cm])
+        summary_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), SLATE_50),
+            ("BOX", (0, 0), (-1, -1), 0.5, SLATE_300),
+            ("TOPPADDING", (0, 0), (-1, -1), 14),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+            ("LEFTPADDING", (0, 0), (-1, -1), 14),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+        ]))
+        elements.append(summary_table)
+        elements.append(Spacer(1, 0.8 * cm))
+        return elements
+
+    def _risk_analysis(self, analysis: AnalysisResult) -> list:
+        """Build the risk analysis table with clean styling."""
+        elements = []
+        elements.append(Paragraph("Risk Analysis", self.section))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE_300))
         elements.append(Spacer(1, 0.3 * cm))
 
         if not analysis.risks:
-            elements.append(Paragraph("No risks identified.", self.body_style))
+            elements.append(Paragraph(
+                "No risks identified — all documents passed analysis.",
+                ParagraphStyle("NoRisk", parent=self.body, textColor=GREEN_600),
+            ))
+            elements.append(Spacer(1, 0.5 * cm))
             return elements
 
-        # Table headers
-        table_data = [
-            [
-                Paragraph("<b>Level</b>", self.body_style),
-                Paragraph("<b>Category</b>", self.body_style),
-                Paragraph("<b>Description</b>", self.body_style),
-                Paragraph("<b>Source Document</b>", self.body_style),
-            ]
-        ]
+        # Header style for table cells
+        hdr_style = ParagraphStyle("TH", parent=self.body, fontSize=9,
+                                   textColor=WHITE, fontName="Helvetica-Bold")
+        cell_style = ParagraphStyle("TD", parent=self.body, fontSize=9,
+                                    textColor=SLATE_700, leading=13)
 
-        level_colors = {
-            "HIGH": colors.HexColor("#fff0f0"),
-            "MEDIUM": colors.HexColor("#fff8e1"),
-            "LOW": colors.HexColor("#f0fff4"),
-        }
-        level_text_colors = {
-            "HIGH": AMD_RED,
-            "MEDIUM": colors.HexColor("#e65100"),
-            "LOW": colors.HexColor("#2e7d32"),
-        }
+        table_data = [[
+            Paragraph("SEVERITY", hdr_style),
+            Paragraph("CATEGORY", hdr_style),
+            Paragraph("DESCRIPTION", hdr_style),
+            Paragraph("SOURCE", hdr_style),
+        ]]
+
+        level_text_color = {"HIGH": AMD_RED, "MEDIUM": AMBER_600, "LOW": GREEN_600}
+        level_bg = {"HIGH": RED_50, "MEDIUM": AMBER_50, "LOW": GREEN_50}
 
         row_styles = []
         for i, risk in enumerate(analysis.risks, start=1):
-            level_color = level_text_colors.get(risk.level, BLACK)
+            tc = level_text_color.get(risk.level, BLACK)
             table_data.append([
                 Paragraph(f"<b>{risk.level}</b>", ParagraphStyle(
-                    f"Level{i}",
-                    parent=self.body_style,
-                    textColor=level_text_colors.get(risk.level, BLACK),
-                    fontName="Helvetica-Bold",
-                )),
-                Paragraph(risk.category, self.body_style),
-                Paragraph(risk.description, self.body_style),
-                Paragraph(risk.sourceDocument, self.label_style),
+                    f"Lv{i}", parent=cell_style, textColor=tc, fontName="Helvetica-Bold")),
+                Paragraph(risk.category, cell_style),
+                Paragraph(risk.description, cell_style),
+                Paragraph(risk.sourceDocument, ParagraphStyle(
+                    f"Src{i}", parent=cell_style, fontSize=8, textColor=SLATE_500)),
             ])
-            bg = level_colors.get(risk.level, WHITE)
-            row_styles.append(("BACKGROUND", (0, i), (-1, i), bg))
+            row_styles.append(("BACKGROUND", (0, i), (-1, i), level_bg.get(risk.level, WHITE)))
 
-        col_widths = [2 * cm, 2.5 * cm, 7.5 * cm, 4 * cm]
-        table = Table(table_data, colWidths=col_widths, repeatRows=1)
-        table_style = TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), AMD_DARK),
+        table = Table(table_data, colWidths=[2.2*cm, 2.5*cm, 7.8*cm, 3.5*cm], repeatRows=1)
+        style = TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), SLATE_900),
             ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, 0), 10),
-            ("GRID", (0, 0), (-1, -1), 0.5, AMD_MED_GRAY),
+            ("FONTSIZE", (0, 0), (-1, 0), 9),
+            ("GRID", (0, 0), (-1, -1), 0.5, SLATE_300),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 6),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
         ])
-        for style_cmd in row_styles:
-            table_style.add(*style_cmd)
-        table.setStyle(table_style)
-
+        for cmd in row_styles:
+            style.add(*cmd)
+        table.setStyle(style)
         elements.append(table)
-        elements.append(Spacer(1, 0.5 * cm))
+        elements.append(Spacer(1, 0.8 * cm))
         return elements
 
-    def _build_comparison_matrix(self, analysis: AnalysisResult) -> list:
-        """Build the supplier comparison matrix table."""
+    def _comparison_matrix(self, analysis: AnalysisResult) -> list:
+        """Build comparison matrix — only called when data exists."""
         elements = []
-        elements.append(Paragraph("Supplier Comparison Matrix", self.section_header_style))
-        elements.append(HRFlowable(width="100%", thickness=1, color=AMD_MED_GRAY))
+        elements.append(Paragraph("Document Comparison", self.section))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE_300))
         elements.append(Spacer(1, 0.3 * cm))
 
-        if not analysis.comparisonMatrix:
-            elements.append(Paragraph("No comparison data available.", self.body_style))
-            return elements
-
-        # Collect all supplier names dynamically
-        all_suppliers: list[str] = []
+        # Collect columns
+        all_cols: list[str] = []
         for row in analysis.comparisonMatrix:
-            for supplier in row.values.keys():
-                if supplier not in all_suppliers:
-                    all_suppliers.append(supplier)
+            for col in row.values.keys():
+                if col not in all_cols:
+                    all_cols.append(col)
 
-        # Build header row
-        header = [Paragraph("<b>Criteria</b>", self.body_style)]
-        for supplier in all_suppliers:
-            header.append(Paragraph(f"<b>{supplier}</b>", self.body_style))
-        header.append(Paragraph("<b>Winner</b>", self.body_style))
+        hdr_style = ParagraphStyle("CMH", parent=self.body, fontSize=9,
+                                   textColor=WHITE, fontName="Helvetica-Bold")
+        cell_style = ParagraphStyle("CMC", parent=self.body, fontSize=9, leading=13)
 
+        # Header
+        header = [Paragraph("CRITERIA", hdr_style)]
+        for col in all_cols:
+            header.append(Paragraph(col.upper(), hdr_style))
+        header.append(Paragraph("BEST", hdr_style))
         table_data = [header]
 
         for i, row in enumerate(analysis.comparisonMatrix):
-            data_row = [Paragraph(row.field, self.body_style)]
-            for supplier in all_suppliers:
-                val = row.values.get(supplier, "—")
-                is_winner = row.winner == supplier
-                style = ParagraphStyle(
-                    f"CellWinner{i}{supplier}",
-                    parent=self.body_style,
-                    textColor=colors.HexColor("#2e7d32") if is_winner else BLACK,
-                    fontName="Helvetica-Bold" if is_winner else "Helvetica",
-                )
-                data_row.append(Paragraph(f"{'✓ ' if is_winner else ''}{val}", style))
-            data_row.append(
-                Paragraph(
-                    row.winner or "—",
-                    ParagraphStyle(
-                        f"Winner{i}",
-                        parent=self.body_style,
-                        textColor=colors.HexColor("#2e7d32"),
-                        fontName="Helvetica-Bold",
-                    ),
-                )
-            )
+            data_row = [Paragraph(f"<b>{row.field}</b>", cell_style)]
+            for col in all_cols:
+                val = row.values.get(col, "-")
+                is_winner = row.winner == col
+                s = ParagraphStyle(f"CM{i}{col}", parent=cell_style,
+                    textColor=GREEN_600 if is_winner else SLATE_700,
+                    fontName="Helvetica-Bold" if is_winner else "Helvetica")
+                data_row.append(Paragraph(val, s))
+            data_row.append(Paragraph(
+                f"<b>{row.winner or '-'}</b>",
+                ParagraphStyle(f"W{i}", parent=cell_style, textColor=GREEN_600, fontName="Helvetica-Bold"),
+            ))
             table_data.append(data_row)
 
-        num_cols = len(all_suppliers) + 2
-        col_width = 16 * cm / num_cols
-        col_widths = [col_width] * num_cols
-
-        table = Table(table_data, colWidths=col_widths, repeatRows=1)
-        table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), AMD_DARK),
-                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("GRID", (0, 0), (-1, -1), 0.5, AMD_MED_GRAY),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, AMD_LIGHT_GRAY]),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-            ])
-        )
-
+        num_cols = len(all_cols) + 2
+        col_w = 16 * cm / num_cols
+        table = Table(table_data, colWidths=[col_w] * num_cols, repeatRows=1)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), SLATE_900),
+            ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+            ("GRID", (0, 0), (-1, -1), 0.5, SLATE_300),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, SLATE_50]),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ]))
         elements.append(table)
+        elements.append(Spacer(1, 0.8 * cm))
+        return elements
+
+    def _conflicts(self, analysis: AnalysisResult) -> list:
+        """Build conflicts section — only called when conflicts exist."""
+        elements = []
+        elements.append(Paragraph("Detected Conflicts", self.section))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE_300))
+        elements.append(Spacer(1, 0.3 * cm))
+
+        sev_color = {"HIGH": AMD_RED, "MEDIUM": AMBER_600, "LOW": GREEN_600}
+
+        for i, conflict in enumerate(analysis.conflicts, 1):
+            sc = sev_color.get(conflict.severity, BLACK)
+            block = []
+
+            # Conflict title
+            block.append(Paragraph(
+                f'<b>#{i} {conflict.type}</b>  '
+                f'<font color="#{_hex(sc)}"><b>[{conflict.severity}]</b></font>',
+                self.body_bold,
+            ))
+            block.append(Spacer(1, 0.2 * cm))
+
+            # Side-by-side excerpts
+            excerpt_style = ParagraphStyle("Exc", parent=self.body, fontSize=9,
+                                          textColor=SLATE_700, leading=13)
+            doc_data = [
+                [Paragraph(f"<b>{conflict.documentA.name}</b>", self.small),
+                 Paragraph(f"<b>{conflict.documentB.name}</b>", self.small)],
+                [Paragraph(f'"{conflict.documentA.excerpt}"', excerpt_style),
+                 Paragraph(f'"{conflict.documentB.excerpt}"', excerpt_style)],
+            ]
+            doc_table = Table(doc_data, colWidths=[8 * cm, 8 * cm])
+            doc_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), SLATE_100),
+                ("BACKGROUND", (0, 1), (-1, 1), WHITE),
+                ("BOX", (0, 0), (-1, -1), 0.5, SLATE_300),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, SLATE_300),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]))
+            block.append(doc_table)
+            block.append(Spacer(1, 0.2 * cm))
+
+            block.append(Paragraph(
+                f"<b>Explanation:</b> {conflict.explanation}", self.body))
+            block.append(Paragraph(
+                f"<b>Action:</b> {conflict.recommendedAction}",
+                ParagraphStyle(f"Act{i}", parent=self.body, textColor=BLUE_700),
+            ))
+            block.append(Spacer(1, 0.4 * cm))
+
+            elements.append(KeepTogether(block))
+            if i < len(analysis.conflicts):
+                elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE_300, spaceAfter=8))
+
         elements.append(Spacer(1, 0.5 * cm))
         return elements
 
-    def _build_conflicts_section(self, analysis: AnalysisResult) -> list:
-        """Build the detected conflicts section."""
-        elements = []
-        elements.append(Paragraph("Detected Conflicts", self.section_header_style))
-        elements.append(HRFlowable(width="100%", thickness=1, color=AMD_MED_GRAY))
-        elements.append(Spacer(1, 0.3 * cm))
-
-        if not analysis.conflicts:
-            elements.append(
-                Paragraph("No conflicts detected between documents.", self.body_style)
-            )
-            return elements
-
-        severity_colors = {
-            "HIGH": AMD_RED,
-            "MEDIUM": colors.HexColor("#e65100"),
-            "LOW": colors.HexColor("#2e7d32"),
-        }
-
-        for i, conflict in enumerate(analysis.conflicts):
-            sev_color = severity_colors.get(conflict.severity, BLACK)
-
-            conflict_block = [
-                Paragraph(
-                    f"<b>{conflict.type}</b> — <font color='#{_color_to_hex(sev_color)}'><b>{conflict.severity}</b></font>",
-                    self.body_style,
-                ),
-                Spacer(1, 0.2 * cm),
-            ]
-
-            # Documents comparison table
-            doc_data = [
-                [
-                    Paragraph(f"<b>{conflict.documentA.name}</b>", self.label_style),
-                    Paragraph(f"<b>{conflict.documentB.name}</b>", self.label_style),
-                ],
-                [
-                    Paragraph(
-                        f'"{conflict.documentA.excerpt}"',
-                        self.body_style,
-                    ),
-                    Paragraph(
-                        f'"{conflict.documentB.excerpt}"',
-                        self.body_style,
-                    ),
-                ],
-            ]
-            doc_table = Table(doc_data, colWidths=[8 * cm, 8 * cm])
-            doc_table.setStyle(
-                TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), AMD_LIGHT_GRAY),
-                    ("GRID", (0, 0), (-1, -1), 0.5, AMD_MED_GRAY),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ])
-            )
-            conflict_block.append(doc_table)
-            conflict_block.append(Spacer(1, 0.2 * cm))
-            conflict_block.append(
-                Paragraph(f"<b>Explanation:</b> {conflict.explanation}", self.body_style)
-            )
-            conflict_block.append(
-                Paragraph(
-                    f"<b>Recommended Action:</b> {conflict.recommendedAction}",
-                    ParagraphStyle(
-                        f"Rec{i}",
-                        parent=self.body_style,
-                        textColor=colors.HexColor("#1a237e"),
-                    ),
-                )
-            )
-            conflict_block.append(Spacer(1, 0.4 * cm))
-            conflict_block.append(HRFlowable(width="100%", thickness=0.5, color=AMD_MED_GRAY))
-
-            elements.append(KeepTogether(conflict_block))
-            elements.append(Spacer(1, 0.3 * cm))
-
-        return elements
-
-    def _build_recommendation_section(self, analysis: AnalysisResult) -> list:
-        """Build the final recommendation section."""
+    def _recommendation(self, analysis: AnalysisResult) -> list:
+        """Build the recommendation section with a styled card."""
         elements = []
         rec = analysis.recommendation
 
-        elements.append(Paragraph("Recommendation", self.section_header_style))
-        elements.append(HRFlowable(width="100%", thickness=1, color=AMD_MED_GRAY))
+        elements.append(Paragraph("AI Recommendation", self.section))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=SLATE_300))
         elements.append(Spacer(1, 0.3 * cm))
 
-        # Title box
-        title_data = [[Paragraph(f"<b>{rec.title}</b>", ParagraphStyle(
-            "RecTitle",
-            parent=self.body_style,
-            fontSize=13,
-            textColor=WHITE,
-            alignment=TA_CENTER,
-            fontName="Helvetica-Bold",
-        ))]]
+        # Recommendation title in an accent card
+        title_style = ParagraphStyle("RecT", parent=self.body, fontSize=12,
+                                     textColor=WHITE, fontName="Helvetica-Bold",
+                                     alignment=TA_CENTER, leading=16)
+        title_data = [[Paragraph(rec.title, title_style)]]
         title_table = Table(title_data, colWidths=[16 * cm])
-        title_table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), AMD_DARK),
-                ("TOPPADDING", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-            ])
-        )
+        title_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), SLATE_900),
+            ("TOPPADDING", (0, 0), (-1, -1), 14),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+            ("LEFTPADDING", (0, 0), (-1, -1), 16),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 16),
+        ]))
         elements.append(title_table)
-        elements.append(Spacer(1, 0.3 * cm))
-        elements.append(Paragraph(rec.summary, self.body_style))
-        elements.append(Spacer(1, 0.3 * cm))
-
-        # Next steps
-        elements.append(Paragraph("<b>Next Steps:</b>", self.body_style))
-        for i, step in enumerate(rec.nextSteps, 1):
-            elements.append(
-                Paragraph(f"&nbsp;&nbsp;{i}. {step}", self.body_style)
-            )
-
         elements.append(Spacer(1, 0.4 * cm))
 
-        # Confidence score
+        # Confidence bar (text representation)
         confidence_pct = int(rec.confidence * 100)
-        confidence_color = (
-            colors.HexColor("#2e7d32") if rec.confidence >= 0.7
-            else colors.HexColor("#e65100") if rec.confidence >= 0.4
-            else AMD_RED
-        )
-        elements.append(
-            Paragraph(
-                f"<b>Confidence Score:</b> <font color='#{_color_to_hex(confidence_color)}'><b>{confidence_pct}%</b></font>",
-                self.body_style,
-            )
-        )
-        elements.append(Spacer(1, 1 * cm))
-        elements.append(HRFlowable(width="100%", thickness=2, color=AMD_RED))
+        conf_color = GREEN_600 if confidence_pct >= 70 else AMBER_600 if confidence_pct >= 40 else AMD_RED
+        elements.append(Paragraph(
+            f'<b>AI Confidence:</b>  '
+            f'<font color="#{_hex(conf_color)}"><b>{confidence_pct}%</b></font>',
+            self.body,
+        ))
         elements.append(Spacer(1, 0.3 * cm))
-        elements.append(
-            Paragraph(
-                "Generated by Clausify AI — Powered by AMD MI300X | clausify.app",
-                self.footer_style,
-            )
-        )
 
+        # Summary
+        elements.append(Paragraph(rec.summary, self.body))
+        elements.append(Spacer(1, 0.4 * cm))
+
+        # Next steps as numbered list in a card
+        if rec.nextSteps:
+            elements.append(Paragraph("<b>Next Steps</b>", self.body_bold))
+            elements.append(Spacer(1, 0.2 * cm))
+            step_rows = []
+            for idx, step in enumerate(rec.nextSteps, 1):
+                step_rows.append([
+                    Paragraph(f"<b>{idx}</b>", ParagraphStyle(
+                        f"StN{idx}", parent=self.body, fontSize=10,
+                        textColor=AMD_RED, fontName="Helvetica-Bold", alignment=TA_CENTER)),
+                    Paragraph(step, self.body),
+                ])
+            step_table = Table(step_rows, colWidths=[1.2 * cm, 14.8 * cm])
+            step_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), SLATE_50),
+                ("BOX", (0, 0), (-1, -1), 0.5, SLATE_300),
+                ("INNERGRID", (0, 0), (-1, -1), 0.25, SLATE_300),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]))
+            elements.append(step_table)
+
+        elements.append(Spacer(1, 0.8 * cm))
+        return elements
+
+    def _footer_block(self) -> list:
+        """Build the document footer."""
+        elements = []
+        elements.append(HRFlowable(width="100%", thickness=1.5, color=AMD_RED))
+        elements.append(Spacer(1, 0.3 * cm))
+        elements.append(Paragraph(
+            "Generated by Clausify AI  |  Powered by AMD Instinct MI300X  |  clausify.app",
+            self.footer,
+        ))
         return elements

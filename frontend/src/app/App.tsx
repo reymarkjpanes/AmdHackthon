@@ -40,10 +40,10 @@ export default function App() {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#0D1528',
-            border: '1px solid #1E2D4A',
-            color: '#F0F4FF',
-            fontFamily: 'Inter, sans-serif',
+            background: 'var(--lead)',
+            border: '1px solid var(--rule)',
+            color: 'var(--paper)',
+            fontFamily: "'Inter', sans-serif",
             fontSize: '14px',
           },
         }}

@@ -2,14 +2,12 @@ import { useRef, useState, type DragEvent } from "react";
 import { useNavigate } from "react-router";
 import { NavigationBar } from "../components/NavigationBar";
 import { PrimaryButton } from "../components/Buttons";
+import { DocumentStack } from "../components/DocumentStack";
 import {
   Upload,
-  X,
-  FileText,
   Cpu,
   Sparkles,
   Zap,
-  File,
   CheckCircle,
   Loader,
 } from "lucide-react";
@@ -17,18 +15,13 @@ import { Link } from "react-router";
 import { uploadDocuments, analyzeDocuments } from "../../lib/api";
 import { toast } from "sonner";
 import { useAppDispatch } from "../../lib/store";
+import { motion, AnimatePresence } from "framer-motion";
 
 const LOADING_STAGES = [
   { label: "Extracting text", icon: "📄" },
   { label: "AMD embeddings", icon: "⚡" },
   { label: "Running analysis", icon: "🧠" },
 ];
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -122,50 +115,79 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#080D1A" }}>
+    <div className="min-h-screen" style={{ background: "var(--ink)" }}>
       <NavigationBar />
 
       {/* Hero */}
-      <div className="flex flex-col items-center px-4 pt-12 sm:pt-16 md:pt-20 animate-fadeIn">
-        {/* Event badge */}
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full mb-8 sm:mb-10"
-          style={{
-            background: "rgba(59, 123, 246, 0.08)",
-            border: "1px solid rgba(59, 123, 246, 0.2)",
-          }}
-        >
-          <Zap size={14} style={{ color: "#3B7BF6" }} />
-          <span style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 500, color: "#3B7BF6" }}>
-            AMD Developer Hackathon: ACT II
+      <div
+        className="flex flex-col items-center text-center px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 mx-auto animate-fadeIn"
+        style={{ maxWidth: "1200px" }}
+      >
+        {/* Eyebrow + hackathon badge */}
+        <div className="flex flex-col md:flex-row items-center md:items-center gap-3 mb-6">
+          <span
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "11px",
+              fontWeight: 500,
+              color: "var(--volt)",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+            }}
+          >
+            DOCUMENT INTELLIGENCE PLATFORM
           </span>
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+            style={{
+              background: "var(--volt-dim)",
+              border: "1px solid var(--volt-border)",
+            }}
+          >
+            <Zap size={12} style={{ color: "var(--volt)" }} />
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--paper)" }}>
+              AMD Developer Hackathon: ACT II
+            </span>
+          </div>
         </div>
 
         {/* Headline */}
         <h1
-          className="text-center mb-5 animate-slideUp"
+          className="mb-5 animate-slideUp"
           style={{
-            fontFamily: "DM Sans, sans-serif",
-            fontSize: "clamp(28px, 6vw, 56px)",
-            fontWeight: "bold",
-            lineHeight: 1.15,
-            color: "#F0F4FF",
-            maxWidth: "min(720px, 90vw)",
+            fontFamily: "'DM Sans', sans-serif",
+            fontWeight: 700,
+            fontSize: "clamp(32px, 5.5vw, 56px)",
+            lineHeight: 1.14,
+            color: "var(--paper)",
+            maxWidth: "min(720px, 92vw)",
           }}
         >
-          Your documents speak.<br />We translate them into decisions.
+          Every contract tells a story. We read them all{" "}
+          <span
+            style={{
+              textDecoration: "underline",
+              textDecorationColor: "var(--volt)",
+              textDecorationThickness: "3px",
+              textUnderlineOffset: "4px",
+            }}
+          >
+            at once
+          </span>
+          .
         </h1>
 
         {/* Subheadline */}
         <p
-          className="text-center mb-8 animate-slideUp"
+          className="mb-8 animate-slideUp"
           style={{
             animationDelay: "0.08s",
-            fontFamily: "Inter, sans-serif",
-            fontSize: "clamp(14px, 2.5vw, 18px)",
+            fontFamily: "'Inter', sans-serif",
+            fontWeight: 400,
+            fontSize: "18px",
             lineHeight: 1.6,
-            color: "#8B9CC8",
-            maxWidth: "min(580px, 90vw)",
+            color: "var(--ash)",
+            maxWidth: "min(560px, 92vw)",
           }}
         >
           Upload contracts, quotations, and invoices. Ask anything in plain
@@ -175,20 +197,25 @@ export default function Landing() {
 
         {/* Stats Row */}
         <div
-          className="flex items-center justify-center flex-wrap gap-6 sm:gap-10 mb-10 animate-slideUp"
+          className="flex items-center justify-center md:justify-start flex-wrap gap-0 mb-10 animate-slideUp"
           style={{ animationDelay: "0.15s" }}
         >
           {[
-            { value: "< 60s", label: "Analysis time", color: "#F0F4FF" },
-            { value: "5.6x",  label: "Faster on AMD GPU", color: "#3B7BF6" },
-            { value: "100%",  label: "Evidence-based", color: "#F0F4FF" },
+            { value: "< 60s", label: "Analysis time", color: "var(--paper)" },
+            { value: "AMD MI300X", label: "GPU-Accelerated", color: "var(--volt)" },
+            { value: "100%", label: "Evidence-based", color: "var(--paper)" },
           ].map((stat, i) => (
-            <div key={i} className="flex flex-col items-center">
-              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "clamp(22px, 4vw, 32px)", fontWeight: "bold", color: stat.color }}>
-                {stat.value}
-              </div>
-              <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#8B9CC8" }}>
-                {stat.label}
+            <div key={i} className="flex items-center">
+              {i > 0 && (
+                <div style={{ width: "1px", height: "40px", background: "var(--rule)", margin: "0 clamp(16px, 3vw, 32px)" }} />
+              )}
+              <div className="flex flex-col items-center text-center">
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: "clamp(24px, 4vw, 32px)", color: stat.color, lineHeight: 1.2 }}>
+                  {stat.value}
+                </div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", fontWeight: 500, color: "var(--ash)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: "4px" }}>
+                  {stat.label}
+                </div>
               </div>
             </div>
           ))}
@@ -196,7 +223,7 @@ export default function Landing() {
       </div>
 
       {/* Upload Zone */}
-      <div className="flex flex-col items-center px-4 mb-6">
+      <div className="flex flex-col items-center px-4 sm:px-6 mb-6 mx-auto" style={{ maxWidth: "1200px" }}>
         <input
           ref={fileInputRef}
           type="file"
@@ -207,19 +234,15 @@ export default function Landing() {
         />
 
         <div
-          className="flex flex-col items-center justify-center rounded-2xl w-full animate-slideUp"
+          className="flex flex-col items-center justify-center w-full animate-slideUp"
           style={{
-            maxWidth: "min(720px, 100%)",
+            maxWidth: "600px",
             minHeight: files.length > 0 ? "auto" : "260px",
-            background: isDragging
-              ? "radial-gradient(ellipse at center, rgba(59,123,246,0.06) 0%, #0D1528 70%)"
-              : "radial-gradient(ellipse at center, rgba(59,123,246,0.03) 0%, #0D1528 70%)",
-            border: `2px dashed ${isDragging ? "#3B7BF6" : "#1E2D4A"}`,
-            boxShadow: isDragging
-              ? "0 0 60px rgba(59,123,246,0.15)"
-              : "0 0 40px rgba(59,123,246,0.06)",
+            borderRadius: "var(--radius-card)",
+            background: isDragging ? "var(--volt-dim)" : "var(--lead)",
+            border: `1.5px dashed ${isDragging ? "var(--volt)" : "var(--rule)"}`,
             padding: files.length > 0 ? "24px" : "clamp(24px, 5vw, 40px) clamp(16px, 4vw, 28px)",
-            transition: "border-color 0.2s, box-shadow 0.3s, background 0.3s",
+            transition: "border-color 0.2s, background 0.3s",
             cursor: isLoading ? "default" : "pointer",
             animationDelay: "0.2s",
             position: "relative",
@@ -235,65 +258,42 @@ export default function Landing() {
 
           {files.length === 0 ? (
             <>
-              {/* Upload icon with glow */}
-              <div className="relative mb-5 flex items-center justify-center">
-                <div style={{ width: "80px", height: "80px", background: "rgba(59,123,246,0.08)", borderRadius: "50%", position: "absolute" }} />
-                <div style={{ width: "56px", height: "56px", background: "rgba(59,123,246,0.12)", borderRadius: "50%", position: "absolute" }} />
-                <Upload size={28} style={{ color: "#3B7BF6", position: "relative", zIndex: 1 }} />
+              {/* 3 stacked paper shapes */}
+              <div className="relative mb-5 flex items-center justify-center" style={{ width: "64px", height: "64px" }}>
+                <div style={{ position: "absolute", width: "44px", height: "56px", background: "var(--paper)", borderRadius: "3px", transform: "rotate(-8deg)", top: "4px", left: "6px", boxShadow: "0 2px 6px rgba(0,0,0,0.25)" }} />
+                <div style={{ position: "absolute", width: "44px", height: "56px", background: "var(--paper)", borderRadius: "3px", transform: "rotate(5deg)", top: "2px", left: "12px", boxShadow: "0 2px 6px rgba(0,0,0,0.25)" }} />
+                <div style={{ position: "absolute", width: "44px", height: "56px", background: "var(--paper)", borderRadius: "3px", transform: "rotate(-2deg)", top: "0px", left: "10px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }} />
               </div>
 
-              <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "clamp(16px, 3vw, 20px)", fontWeight: 600, color: "#F0F4FF", marginBottom: "8px", textAlign: "center" }}>
-                Drop your business documents here
+              <h3 className="hidden md:block" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: "clamp(16px, 3vw, 20px)", color: "var(--paper)", marginBottom: "8px", textAlign: "center" }}>
+                Drop documents here
               </h3>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#4A5878", marginBottom: "14px", textAlign: "center" }}>
-                PDF, PNG, JPG, JPEG — up to 10 files, 10MB each
+              <h3 className="md:hidden" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: "clamp(16px, 3vw, 20px)", color: "var(--paper)", marginBottom: "8px", textAlign: "center" }}>
+                Tap to select
+              </h3>
+
+              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "var(--ghost)", marginBottom: "14px", textAlign: "center" }}>
+                PDF · PNG · JPG · JPEG — up to 10 files
               </p>
-              <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 500, color: "#3B7BF6", textDecoration: "underline", marginBottom: "18px" }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--volt)", textDecoration: "underline" }}>
                 or browse files
               </span>
-
-              <div className="flex flex-wrap gap-2 justify-center">
-                {["PDF", "PNG", "JPG", "JPEG"].map((fmt) => (
-                  <div key={fmt} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md" style={{ background: "#111E35", border: "1px solid #1E2D4A" }}>
-                    <File size={11} style={{ color: "#4A5878" }} />
-                    <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#4A5878" }}>{fmt}</span>
-                  </div>
-                ))}
-              </div>
             </>
           ) : (
             <div style={{ width: "100%" }} onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 500, color: "#8B9CC8" }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--ash)" }}>
                   {files.length} file{files.length !== 1 ? "s" : ""} selected
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                  style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#3B7BF6", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+                  style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--volt)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
                 >
                   + Add more
                 </button>
               </div>
 
-              <div className="space-y-2 mb-4">
-                {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: "#111E35", border: "1px solid #1E2D4A" }}>
-                    <FileText size={16} style={{ color: "#3B7BF6", flexShrink: 0 }} />
-                    <span className="flex-1 truncate" style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#F0F4FF" }}>
-                      {file.name}
-                    </span>
-                    <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#4A5878", flexShrink: 0 }}>
-                      {formatBytes(file.size)}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "#4A5878", flexShrink: 0, display: "flex", alignItems: "center" }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <DocumentStack files={files} onRemove={removeFile} />
             </div>
           )}
         </div>
@@ -302,7 +302,7 @@ export default function Landing() {
         {error && (
           <div
             className="mt-3 px-4 py-3 rounded-lg w-full animate-slideDown"
-            style={{ maxWidth: "min(720px, 100%)", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#EF4444" }}
+            style={{ maxWidth: "600px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--error)" }}
           >
             {error}
           </div>
@@ -310,147 +310,219 @@ export default function Landing() {
 
         {/* Analyze button */}
         {files.length > 0 && !isLoading && (
-          <div className="mt-5 animate-slideUp">
-            <PrimaryButton onClick={handleAnalyze}>
-              Analyze {files.length} Document{files.length !== 1 ? "s" : ""}
+          <motion.div
+            className="mt-5 w-full animate-slideUp"
+            style={{ maxWidth: "600px" }}
+            animate={{ scale: [1, 1.02, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <PrimaryButton
+              onClick={handleAnalyze}
+              style={{
+                width: "100%",
+                height: "56px",
+                boxShadow: "0 0 24px rgba(59,123,246,0.35), 0 0 60px rgba(59,123,246,0.12)",
+              }}
+            >
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: "16px" }}>
+                Analyze {files.length} Document{files.length !== 1 ? "s" : ""}
+              </span>
             </PrimaryButton>
-          </div>
+          </motion.div>
         )}
 
-        {/* Loading state — improved */}
+        {/* Loading / processing view */}
         {isLoading && (
-          <div className="mt-5 flex flex-col items-center gap-5 w-full animate-fadeIn" style={{ maxWidth: "min(720px, 100%)" }}>
-            {/* AMD-style processing card */}
+          <motion.div
+            className="mt-5 flex flex-col items-center gap-5 w-full"
+            style={{ maxWidth: "600px" }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
             <div
               className="w-full rounded-xl p-5"
               style={{
-                background: "#0D1528",
-                border: "1px solid rgba(59,123,246,0.3)",
-                boxShadow: "0 0 30px rgba(59,123,246,0.08)",
+                background: "var(--lead)",
+                border: "1px solid var(--volt-border)",
                 animation: "borderPulse 2s ease-in-out infinite",
+                position: "relative",
+                overflow: "hidden",
               }}
             >
+              {/* Header with AMD icon + orbiting particles */}
               <div className="flex items-center gap-3 mb-4">
-                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(59,123,246,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Loader size={16} style={{ color: "#3B7BF6" }} className="animate-spin-slow" />
+                <div style={{ width: "40px", height: "40px", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "var(--volt-dim)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1 }}>
+                    <Loader size={16} style={{ color: "var(--volt)" }} className="animate-spin-slow" />
+                  </div>
+                  {/* Orbiting particles */}
+                  <span className="orbit-particle" style={{ animationDuration: "2s", top: "50%", left: "50%", marginTop: "-3px", marginLeft: "-3px" }} />
+                  <span className="orbit-particle" style={{ animationDuration: "2.8s", animationDelay: "-0.9s", top: "50%", left: "50%", marginTop: "-3px", marginLeft: "-3px", opacity: 0.7 }} />
+                  <span className="orbit-particle" style={{ animationDuration: "3.5s", animationDelay: "-1.8s", top: "50%", left: "50%", marginTop: "-3px", marginLeft: "-3px", opacity: 0.5 }} />
                 </div>
                 <div>
-                  <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "15px", fontWeight: 600, color: "#F0F4FF" }}>
-                    AMD MI300X Processing
+                  <div className="flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="animate-voltPulse"
+                      style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--amd-signal)", display: "inline-block", flexShrink: 0 }}
+                    />
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "14px", fontWeight: 600, color: "var(--amd-signal)" }}>
+                      AMD MI300X Processing
+                    </span>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#4A5878" }}>
-                    {LOADING_STAGES[loadingStage].label}…
-                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={loadingStage}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", color: "var(--ghost)", display: "block" }}
+                    >
+                      {LOADING_STAGES[loadingStage].label}…
+                    </motion.span>
+                  </AnimatePresence>
                 </div>
               </div>
 
-              {/* Progress bar */}
-              <div style={{ height: "4px", background: "#1E2D4A", borderRadius: "2px", overflow: "hidden", marginBottom: "16px" }}>
+              {/* Premium progress bar */}
+              <div style={{ height: "4px", background: "var(--graphite)", borderRadius: "2px", overflow: "hidden", marginBottom: "16px" }}>
                 <div
-                  className="shimmer-bar"
+                  className="progress-bar-premium"
                   style={{
                     height: "100%",
-                    borderRadius: "2px",
                     width: `${((loadingStage + 1) / LOADING_STAGES.length) * 100}%`,
-                    transition: "width 0.6s ease",
+                    transition: "width 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
                 />
               </div>
 
-              {/* Stage steps */}
+              {/* Stage steps with AnimatePresence */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:items-center">
                 {LOADING_STAGES.map((stage, i) => (
                   <div key={i} className="flex items-center gap-2 flex-1">
                     {i > 0 && (
                       <div
                         className="hidden sm:block"
-                        style={{ flex: 1, height: "1px", background: i <= loadingStage ? "#3B7BF6" : "#1E2D4A", transition: "background 0.4s", margin: "0 8px" }}
+                        style={{ flex: 1, height: "1px", background: i <= loadingStage ? "var(--volt)" : "var(--rule)", transition: "background 0.4s", margin: "0 8px" }}
                       />
                     )}
-                    <div className="flex items-center gap-2">
+                    <motion.div
+                      className="flex items-center gap-2"
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                        scale: i === loadingStage ? [1, 1.04, 1] : 1,
+                      }}
+                      transition={{
+                        opacity: { duration: 0.3, delay: i * 0.1 },
+                        x: { type: "spring", stiffness: 300, damping: 20, delay: i * 0.1 },
+                        scale: { duration: 0.6, repeat: i === loadingStage ? Infinity : 0, ease: "easeInOut" },
+                      }}
+                    >
                       {i < loadingStage ? (
-                        <CheckCircle size={16} style={{ color: "#10B981", flexShrink: 0 }} />
+                        <motion.div
+                          initial={{ scale: 0.5 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                        >
+                          <CheckCircle size={16} style={{ color: "var(--cleared)", flexShrink: 0 }} />
+                        </motion.div>
                       ) : i === loadingStage ? (
                         <div
                           style={{
                             width: "16px", height: "16px", borderRadius: "50%",
-                            border: "2px solid #3B7BF6",
+                            border: "2px solid var(--volt)",
                             borderTopColor: "transparent",
                             flexShrink: 0,
                           }}
                           className="animate-spin-slow"
                         />
                       ) : (
-                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid #1E2D4A", flexShrink: 0 }} />
+                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid var(--rule)", flexShrink: 0 }} />
                       )}
                       <span
                         style={{
-                          fontFamily: "Inter, sans-serif",
+                          fontFamily: "'Inter', sans-serif",
                           fontSize: "13px",
                           fontWeight: i === loadingStage ? 600 : 400,
-                          color: i < loadingStage ? "#10B981" : i === loadingStage ? "#F0F4FF" : "#4A5878",
+                          color: i < loadingStage ? "var(--cleared)" : i === loadingStage ? "var(--paper)" : "var(--ghost)",
                           whiteSpace: "nowrap",
                         }}
                       >
                         {stage.label}
                       </span>
-                    </div>
+                    </motion.div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* AMD Trust Strip */}
       <div
         className="w-full py-4 flex items-center justify-center gap-2 mt-4"
-        style={{ background: "rgba(59,123,246,0.04)", borderTop: "1px solid rgba(59,123,246,0.08)", borderBottom: "1px solid rgba(59,123,246,0.08)" }}
+        style={{ background: "var(--volt-dim)", borderTop: "1px solid var(--rule)", borderBottom: "1px solid var(--rule)" }}
       >
-        <Zap size={14} style={{ color: "#4A5878" }} />
-        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "clamp(11px, 2vw, 12px)", fontWeight: 500, color: "#4A5878", textAlign: "center" }}>
+        <Zap size={14} style={{ color: "var(--ash)" }} />
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "clamp(11px, 2vw, 12px)", fontWeight: 500, color: "var(--ash)", textAlign: "center" }}>
           Running on AMD Instinct MI300X · ROCm-powered embeddings · Enterprise-grade inference
         </p>
       </div>
 
       {/* How It Works */}
-      <div className="flex flex-col items-center px-4 py-16">
-        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#4A5878", marginBottom: "10px" }}>
+      <div id="how-it-works" className="flex flex-col items-center px-4 py-16">
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ash)", marginBottom: "10px" }}>
           HOW IT WORKS
         </p>
-        <h2 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 600, color: "#F0F4FF", marginBottom: "40px", textAlign: "center" }}>
+        <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700, color: "var(--paper)", marginBottom: "40px", textAlign: "center" }}>
           From documents to decisions in 3 steps
         </h2>
 
-        <div className="grid gap-5 w-full" style={{ maxWidth: "min(1040px, 100%)", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+        <div className="flex flex-col md:flex-row items-stretch w-full gap-5 md:gap-0" style={{ maxWidth: "1040px" }}>
           {[
             { num: "01", Icon: Upload,   title: "Upload Documents",        desc: "Drop your PDFs, contracts, quotations, invoices — any business document" },
             { num: "02", Icon: Cpu,      title: "AMD AI Analyzes",          desc: "Our AMD-powered AI reads all files simultaneously, detects conflicts across documents" },
             { num: "03", Icon: Sparkles, title: "Make Better Decisions",    desc: "Ask questions in plain language. Get evidence-backed answers with exact source citations" },
-          ].map(({ num, Icon, title, desc }) => (
-            <div
+          ].map(({ num, Icon, title, desc }, idx) => (
+            <motion.div
               key={num}
-              className="rounded-xl p-6"
-              style={{
-                background: "#0D1528",
-                border: "1px solid #1E2D4A",
-                transition: "border-color 0.2s, transform 0.15s",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = "rgba(59,123,246,0.3)";
-                e.currentTarget.style.transform = "scale(1.02)";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = "#1E2D4A";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
+              className="flex flex-1 items-stretch"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.5, delay: idx * 0.15 }}
             >
-              <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "36px", fontWeight: "bold", color: "rgba(59,123,246,0.2)", marginBottom: "10px" }}>{num}</div>
-              <Icon size={26} style={{ color: "#3B7BF6", marginBottom: "14px" }} />
-              <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF", marginBottom: "8px" }}>{title}</h3>
-              <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#8B9CC8" }}>{desc}</p>
-            </div>
+              {idx > 0 && (
+                <div className="hidden md:block self-center" style={{ flex: "0 0 24px", height: "1px", background: "var(--rule)" }} />
+              )}
+              <div
+                className="flex-1 p-6"
+                style={{
+                  background: "var(--lead)",
+                  border: "1px solid var(--rule)",
+                  borderRadius: "var(--radius-card)",
+                  transition: "border-color 0.2s, transform 0.15s",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = "var(--volt-border)";
+                  e.currentTarget.style.transform = "scale(1.02)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = "var(--rule)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                <Icon size={26} style={{ color: "var(--volt)", marginBottom: "14px" }} />
+                <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 600, color: "var(--paper)", marginBottom: "8px" }}>{title}</h3>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", fontWeight: 400, lineHeight: 1.6, color: "var(--ash)" }}>{desc}</p>
+              </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -459,12 +531,12 @@ export default function Landing() {
       <div className="flex justify-center px-4 pb-16">
         <div
           className="flex flex-col items-center rounded-2xl px-6 py-8 w-full"
-          style={{ maxWidth: "min(600px, 100%)", background: "rgba(59,123,246,0.04)", border: "1px solid rgba(59,123,246,0.12)" }}
+          style={{ maxWidth: "min(600px, 100%)", background: "var(--lead)", border: "1px solid var(--volt-border)" }}
         >
-          <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "clamp(16px, 3vw, 20px)", fontWeight: 600, color: "#F0F4FF", marginBottom: "8px", textAlign: "center" }}>
+          <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(16px, 3vw, 20px)", fontWeight: 600, color: "var(--paper)", marginBottom: "8px", textAlign: "center" }}>
             See it in action — no upload needed
           </h3>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", color: "#8B9CC8", marginBottom: "20px", textAlign: "center" }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", color: "var(--ash)", marginBottom: "20px", textAlign: "center" }}>
             Try with pre-loaded procurement documents
           </p>
           <Link to="/demo">

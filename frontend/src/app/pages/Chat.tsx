@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavigationBar } from "../components/NavigationBar";
 import { GhostButton, PrimaryButton } from "../components/Buttons";
-import { EvidenceTag } from "../components/Badges";
+import { EvidenceTag, EvidenceBox } from "../components/Badges";
 import {
   Paperclip,
   Send,
@@ -81,15 +81,15 @@ export default function Chat() {
 
   if (!sessionId) {
     return (
-      <div className="min-h-screen" style={{ background: "#080D1A" }}>
+      <div className="min-h-screen" style={{ background: "var(--ink)" }}>
         <NavigationBar showDemo={false} />
         <div className="flex flex-col items-center pt-24 gap-6 px-4 animate-fadeIn">
-          <div className="px-6 py-6 rounded-xl text-center w-full" style={{ background: "#0D1528", border: "1px solid #1E2D4A", maxWidth: "480px" }}>
-            <FileText size={40} style={{ color: "#4A5878", margin: "0 auto 16px" }} />
-            <h2 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", fontWeight: 600, color: "#F0F4FF", marginBottom: "8px" }}>
+          <div className="px-6 py-6 rounded-xl text-center w-full" style={{ background: "var(--lead)", border: "1px solid var(--rule)", maxWidth: "480px" }}>
+            <FileText size={40} style={{ color: "var(--ghost)", margin: "0 auto 16px" }} />
+            <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "20px", fontWeight: 700, color: "var(--paper)", marginBottom: "8px" }}>
               No active session
             </h2>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#8B9CC8", marginBottom: "20px" }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--ash)", marginBottom: "20px" }}>
               Please upload documents first to start asking questions.
             </p>
             <Link to="/"><PrimaryButton>Upload Documents</PrimaryButton></Link>
@@ -221,59 +221,57 @@ export default function Chat() {
   const SidebarContent = () => (
     <>
       <div className="p-4">
-        <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 500, color: "#8B9CC8", marginBottom: "12px" }}>
+        <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", fontWeight: 500, color: "var(--ghost)", marginBottom: "12px" }}>
           Active Documents
         </h3>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {documents.map((doc) => {
             const isImage = doc.fileType === "image";
             return (
               <div
                 key={doc.id}
-                className="px-3 py-3 rounded-lg"
-                style={{ borderLeft: "2px solid transparent", transition: "background 0.15s, border-color 0.15s", cursor: "default" }}
-                onMouseOver={(e) => { e.currentTarget.style.background = "#111E35"; e.currentTarget.style.borderLeftColor = "#3B7BF6"; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderLeftColor = "transparent"; }}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
+                style={{ background: "var(--graphite)", border: "1px solid var(--rule)" }}
               >
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center rounded shrink-0" style={{ width: "20px", height: "20px", background: isImage ? "rgba(59,123,246,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${isImage ? "rgba(59,123,246,0.3)" : "rgba(239,68,68,0.3)"}` }}>
-                    <span style={{ fontFamily: "Inter, sans-serif", fontSize: "8px", fontWeight: 600, color: isImage ? "#3B7BF6" : "#EF4444" }}>
-                      {isImage ? "IMG" : "PDF"}
-                    </span>
-                  </div>
-                  <div className="truncate" style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 500, color: "#F0F4FF" }}>
-                    {doc.filename}
-                  </div>
-                </div>
+                <span
+                  aria-hidden="true"
+                  style={{ width: "6px", height: "6px", borderRadius: "50%", background: isImage ? "var(--volt)" : "var(--conflict)", flexShrink: 0 }}
+                />
+                <span
+                  className="truncate"
+                  style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", fontWeight: 500, color: "var(--ash)" }}
+                >
+                  {doc.filename}
+                </span>
               </div>
             );
           })}
         </div>
       </div>
 
-      <div style={{ height: "1px", background: "#1E2D4A", margin: "8px 0" }} />
+      <div style={{ height: "1px", background: "var(--rule)", margin: "8px 0" }} />
 
       <div className="px-4 pb-4">
-        <div className="mb-3 flex items-center gap-2" style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#4A5878", textTransform: "uppercase" }}>
-          <Sparkles size={12} style={{ color: "#4A5878" }} />
+        <div className="mb-3 flex items-center gap-2" style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--ghost)", textTransform: "uppercase" }}>
+          <Sparkles size={12} style={{ color: "var(--ghost)" }} />
           QUICK QUESTIONS
         </div>
         <div className="flex flex-col gap-2">
           {questionsLoading ? (
             <div className="flex items-center gap-2 px-3 py-2">
-              <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-              <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-              <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-              <span style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: "#4A5878" }}>Generating…</span>
+              <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+              <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+              <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", color: "var(--ghost)" }}>Generating…</span>
             </div>
           ) : (
             quickQuestions.map((q, idx) => (
               <button
                 key={idx}
-                className="px-3 py-2 rounded-lg border text-left transition-all"
-                style={{ background: "#111E35", borderColor: "#1E2D4A", fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#8B9CC8", cursor: "pointer" }}
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = "#3B7BF6"; e.currentTarget.style.color = "#F0F4FF"; }}
-                onMouseOut={(e) => { e.currentTarget.style.borderColor = "#1E2D4A"; e.currentTarget.style.color = "#8B9CC8"; }}
+                className="w-full px-3 py-2 rounded-lg border text-left transition-all"
+                style={{ background: "var(--lead)", borderColor: "var(--rule)", borderRadius: "var(--radius-btn)", fontFamily: "'Inter', sans-serif", fontWeight: 400, fontSize: "13px", color: "var(--ash)", cursor: "pointer" }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = "var(--volt-border)"; e.currentTarget.style.color = "var(--paper)"; e.currentTarget.style.background = "var(--volt-dim)"; }}
+                onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--rule)"; e.currentTarget.style.color = "var(--ash)"; e.currentTarget.style.background = "var(--lead)"; }}
                 onClick={() => { void handleSubmit(q); }}
                 disabled={isThinking || isStreaming}
               >
@@ -287,14 +285,14 @@ export default function Chat() {
   );
 
   return (
-    <div className="flex flex-col" style={{ height: "100dvh", background: "#080D1A" }}>
+    <div className="flex flex-col" style={{ height: "100dvh", background: "var(--ink)" }}>
       <NavigationBar showDemo={false} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop left panel */}
         <div
           className="hidden md:flex flex-col shrink-0"
-          style={{ width: "280px", background: "#0D1528", borderRight: "1px solid #1E2D4A", overflowY: "auto" }}
+          style={{ width: "280px", background: "var(--lead)", borderRight: "1px solid var(--rule)", overflowY: "auto" }}
         >
           <SidebarContent />
         </div>
@@ -304,12 +302,12 @@ export default function Chat() {
           <div className="md:hidden fixed inset-0 z-50 animate-fadeIn" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setSidebarOpen(false)}>
             <div
               className="animate-slideDown"
-              style={{ width: "min(300px, 85vw)", height: "100%", background: "#0D1528", borderRight: "1px solid #1E2D4A", overflowY: "auto" }}
+              style={{ width: "min(300px, 85vw)", height: "100%", background: "var(--lead)", borderRight: "1px solid var(--rule)", overflowY: "auto" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid #1E2D4A" }}>
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "15px", fontWeight: 600, color: "#F0F4FF" }}>Documents & Questions</span>
-                <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8B9CC8" }}>
+              <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid var(--rule)" }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "var(--paper)" }}>Documents & Questions</span>
+                <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ash)" }}>
                   <X size={18} />
                 </button>
               </div>
@@ -322,41 +320,46 @@ export default function Chat() {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Chat Header */}
           <div
-            className="flex items-center justify-between px-4 sm:px-6 h-14 shrink-0"
-            style={{ background: "#0D1528", borderBottom: "1px solid #1E2D4A" }}
+            className="flex items-center justify-between px-4 sm:px-6 shrink-0"
+            style={{ background: "var(--lead)", borderBottom: "1px solid var(--rule)", height: "60px" }}
           >
             <div className="flex items-center gap-3">
               {/* Mobile sidebar toggle */}
               <button
                 className="md:hidden flex items-center justify-center"
                 onClick={() => setSidebarOpen(true)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#8B9CC8", padding: "4px", marginRight: "4px" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ash)", padding: "4px", marginRight: "4px" }}
               >
                 <PanelLeft size={18} />
               </button>
 
-              {/* AI Avatar */}
-              <div className="relative shrink-0">
-                <div style={{ width: "36px", height: "36px", position: "relative" }}>
-                  <div style={{ width: "36px", height: "36px", clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)", background: "linear-gradient(135deg, #1E2D4A, #0D1528)", border: "2px solid #3B7BF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", fontWeight: "bold", color: "#3B7BF6" }}>AI</span>
-                  </div>
+              {/* Document-icon avatar with pulse ring */}
+              <div className="relative shrink-0" style={{ width: "40px", height: "40px" }}>
+                <div
+                  aria-hidden="true"
+                  className="animate-voltPulse"
+                  style={{ position: "absolute", top: "-4px", left: "-4px", right: "-4px", bottom: "-4px", borderRadius: "10px", border: "1px solid rgba(59,123,246,0.4)", pointerEvents: "none" }}
+                />
+                <div
+                  style={{ width: "40px", height: "40px", borderRadius: "8px", background: "var(--graphite)", border: "1px solid var(--rule)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}
+                >
+                  <FileText size={18} style={{ color: "var(--volt)" }} />
                 </div>
               </div>
 
               <div className="flex flex-col min-w-0">
-                <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "15px", fontWeight: 600, color: "#F0F4FF" }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "var(--paper)" }}>
                   Decision Copilot
                 </div>
                 <div className="flex items-center gap-2">
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 500, color: "#10B981", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", fontWeight: 500, color: "var(--cleared)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>
                     {docCount} doc{docCount !== 1 ? "s" : ""} · AMD MI300X active
                   </span>
                   {isThinking && (
                     <div className="flex items-center gap-1">
-                      <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-                      <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-                      <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
+                      <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                      <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                      <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
                     </div>
                   )}
                 </div>
@@ -369,19 +372,19 @@ export default function Chat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5" style={{ background: "#080D1A" }}>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5" style={{ background: "var(--ink)" }}>
             {messages.map((msg) => {
               if (msg.role === "user") {
                 return (
                   <div key={msg.id} className="flex justify-end animate-slideUp">
                     <div style={{ maxWidth: "min(520px, 85vw)" }}>
-                      <div className="rounded-2xl px-4 py-3" style={{ background: "#1E2D4A", borderRadius: "16px 16px 4px 16px" }}>
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#F0F4FF" }}>
+                      <div className="rounded-2xl px-4 py-3" style={{ background: "var(--graphite)", borderRadius: "16px 16px 4px 16px" }}>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--paper)" }}>
                           {msg.content}
                         </p>
                       </div>
                       <div className="text-right mt-1">
-                        <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#4A5878" }}>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "var(--ghost)" }}>
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </div>
@@ -394,40 +397,34 @@ export default function Chat() {
               return (
                 <div key={msg.id} className="flex justify-start animate-slideUp">
                   <div style={{ maxWidth: "min(720px, 95vw)", width: "100%" }}>
-                    <div className="rounded-2xl p-4 sm:p-5" style={{ background: "#0D1528", border: "1px solid #1E2D4A", borderLeft: "3px solid #3B7BF6", borderRadius: "4px 16px 16px 16px" }}>
+                    <div className="rounded-2xl p-4 sm:p-5" style={{ background: "var(--lead)", border: "1px solid var(--rule)", borderLeft: "3px solid var(--volt)", borderRadius: "4px 16px 16px 16px" }}>
                       {/* ANSWER */}
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-3">
-                          <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#4A5878", textTransform: "uppercase" }}>ANSWER</span>
-                          <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
+                          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--ghost)", textTransform: "uppercase" }}>ANSWER</span>
+                          <div style={{ flex: 1, height: "1px", background: "var(--rule)" }} />
                         </div>
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#F0F4FF" }}>{sr.answer}</p>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--paper)" }}>{sr.answer}</p>
                       </div>
 
                       {/* EVIDENCE */}
                       {sr.evidence.length > 0 && (
                         <div className="mb-4">
-                          <div className="mb-2" style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#4A5878", textTransform: "uppercase" }}>EVIDENCE</div>
+                          <div className="mb-2" style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--ghost)", textTransform: "uppercase" }}>EVIDENCE</div>
                           <div className="space-y-2">
                             {sr.evidence.map((ev, i) => (
                               <div
                                 key={i}
-                                className="pl-3 py-2 rounded-r-md"
-                                style={{
-                                  borderLeft: "2px solid rgba(59,123,246,0.3)",
-                                  background: "rgba(59,123,246,0.04)",
-                                  cursor: "pointer",
-                                  transition: "background 0.15s, border-left-color 0.15s",
-                                }}
+                                style={{ cursor: "pointer", transition: "opacity 0.15s" }}
                                 onClick={() => setSourceModal({ quote: ev.quote, source: ev.sourceDocument, docType: ev.documentType })}
-                                onMouseOver={(e) => { e.currentTarget.style.background = "rgba(59,123,246,0.09)"; e.currentTarget.style.borderLeftColor = "#3B7BF6"; }}
-                                onMouseOut={(e) => { e.currentTarget.style.background = "rgba(59,123,246,0.04)"; e.currentTarget.style.borderLeftColor = "rgba(59,123,246,0.3)"; }}
+                                onMouseOver={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+                                onMouseOut={(e) => { e.currentTarget.style.opacity = "1"; }}
                                 title="Click to view source"
                               >
-                                <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "13px", color: "#F0F4FF", marginBottom: "4px", wordBreak: "break-word" }}>"{ev.quote}"</p>
+                                <EvidenceBox quote={ev.quote} style={{ marginBottom: "6px" }} />
                                 <div className="flex items-center justify-between">
                                   <EvidenceTag filename={ev.sourceDocument} />
-                                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", color: "#3B7BF6", fontWeight: 500 }}>View source →</span>
+                                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "10px", color: "var(--volt)", fontWeight: 500 }}>View source →</span>
                                 </div>
                               </div>
                             ))}
@@ -438,10 +435,10 @@ export default function Chat() {
                       {/* RISK */}
                       {sr.risks && (
                         <div className="mb-4">
-                          <div className="mb-2" style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#4A5878", textTransform: "uppercase" }}>RISK</div>
+                          <div className="mb-2" style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--ghost)", textTransform: "uppercase" }}>RISK</div>
                           <div className="flex items-start gap-2">
-                            <AlertTriangle size={14} style={{ color: "#F59E0B", marginTop: "3px", flexShrink: 0 }} />
-                            <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", lineHeight: 1.6, color: "#F59E0B" }}>{sr.risks}</p>
+                            <AlertTriangle size={14} style={{ color: "var(--caution)", marginTop: "3px", flexShrink: 0 }} />
+                            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", lineHeight: 1.6, color: "var(--caution)" }}>{sr.risks}</p>
                           </div>
                         </div>
                       )}
@@ -449,10 +446,10 @@ export default function Chat() {
                       {/* RECOMMENDATION */}
                       {sr.recommendation && (
                         <div>
-                          <div className="mb-2" style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#4A5878", textTransform: "uppercase" }}>RECOMMENDATION</div>
-                          <div className="p-3 rounded-lg flex items-start gap-2" style={{ background: "rgba(16,185,129,0.04)" }}>
-                            <ArrowRight size={14} style={{ color: "#10B981", marginTop: "3px", flexShrink: 0 }} />
-                            <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", lineHeight: 1.6, color: "#10B981" }}>{sr.recommendation}</p>
+                          <div className="mb-2" style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--ghost)", textTransform: "uppercase" }}>RECOMMENDATION</div>
+                          <div className="flex items-start gap-2" style={{ background: "rgba(0, 212, 255, 0.04)", borderRadius: "4px", padding: "12px", borderLeft: "2px solid var(--volt)" }}>
+                            <ArrowRight size={14} style={{ color: "var(--volt)", marginTop: "3px", flexShrink: 0 }} />
+                            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", fontWeight: 500, lineHeight: 1.6, color: "var(--paper)" }}>{sr.recommendation}</p>
                           </div>
                         </div>
                       )}
@@ -466,24 +463,24 @@ export default function Chat() {
             {isStreaming && (
               <div className="flex justify-start animate-slideUp">
                 <div style={{ maxWidth: "min(720px, 95vw)", width: "100%" }}>
-                  <div className="rounded-2xl p-4 sm:p-5" style={{ background: "#0D1528", border: "1px solid #1E2D4A", borderLeft: "3px solid #3B7BF6", borderRadius: "4px 16px 16px 16px" }}>
+                  <div className="rounded-2xl p-4 sm:p-5" style={{ background: "var(--lead)", border: "1px solid var(--rule)", borderLeft: "3px solid var(--volt)", borderRadius: "4px 16px 16px 16px" }}>
                     <div className="mb-2 flex items-center gap-2">
-                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#4A5878", textTransform: "uppercase" }}>ANSWER</span>
-                      <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--ghost)", textTransform: "uppercase" }}>ANSWER</span>
+                      <div style={{ flex: 1, height: "1px", background: "var(--rule)" }} />
                       <div className="flex items-center gap-1">
-                        <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-                        <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
-                        <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "#3B7BF6" }} />
+                        <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                        <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                        <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
                       </div>
                     </div>
-                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#F0F4FF" }}>
+                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--paper)" }}>
                       {streamingAnswer}
                       <span
                         style={{
                           display: "inline-block",
                           width: "2px",
                           height: "1em",
-                          background: "#3B7BF6",
+                          background: "var(--volt)",
                           marginLeft: "2px",
                           verticalAlign: "text-bottom",
                           animation: "blink 1s step-end infinite",
@@ -498,12 +495,12 @@ export default function Chat() {
             {/* Thinking indicator */}
             {isThinking && (
               <div className="flex justify-start animate-slideUp">
-                <div className="px-4 py-4 rounded-2xl" style={{ background: "#0D1528", border: "1px solid #1E2D4A", borderLeft: "3px solid #3B7BF6", borderRadius: "4px 16px 16px 16px" }}>
+                <div className="px-4 py-4 rounded-2xl" style={{ background: "var(--lead)", border: "1px solid var(--rule)", borderLeft: "3px solid var(--volt)", borderRadius: "4px 16px 16px 16px" }}>
                   <div className="flex items-center gap-3">
-                    <div className="animate-dot-1 w-2 h-2 rounded-full" style={{ background: "#3B7BF6" }} />
-                    <div className="animate-dot-2 w-2 h-2 rounded-full" style={{ background: "#3B7BF6" }} />
-                    <div className="animate-dot-3 w-2 h-2 rounded-full" style={{ background: "#3B7BF6" }} />
-                    <span style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#4A5878" }}>Clausify AI is thinking…</span>
+                    <div className="animate-dot-1 w-2 h-2 rounded-full" style={{ background: "var(--volt)", boxShadow: "0 0 6px rgba(59,123,246,0.5)" }} />
+                    <div className="animate-dot-2 w-2 h-2 rounded-full" style={{ background: "var(--volt)", boxShadow: "0 0 6px rgba(59,123,246,0.5)" }} />
+                    <div className="animate-dot-3 w-2 h-2 rounded-full" style={{ background: "var(--volt)", boxShadow: "0 0 6px rgba(59,123,246,0.5)" }} />
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", color: "var(--ghost)" }}>Clausify AI is thinking…</span>
                   </div>
                 </div>
               </div>
@@ -513,20 +510,43 @@ export default function Chat() {
           </div>
 
           {/* Chat Input */}
-          <div className="px-4 sm:px-6 py-4 shrink-0 safe-bottom" style={{ background: "#0D1528", borderTop: "1px solid #1E2D4A" }}>
+          <div className="px-4 sm:px-6 py-4 shrink-0 safe-bottom" style={{ background: "var(--lead)", borderTop: "1px solid var(--rule)" }}>
+            {/* Mobile: quick questions scrollable horizontally above input */}
+            <div className="md:hidden overflow-x-auto no-scrollbar flex items-center gap-2 mb-3">
+              {questionsLoading ? (
+                <div className="flex items-center gap-2 px-1 shrink-0">
+                  <div className="animate-dot-1 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                  <div className="animate-dot-2 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                  <div className="animate-dot-3 w-1.5 h-1.5 rounded-full" style={{ background: "var(--volt)" }} />
+                </div>
+              ) : (
+                quickQuestions.map((q, idx) => (
+                  <button
+                    key={idx}
+                    className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg border transition-all"
+                    style={{ background: "var(--lead)", borderColor: "var(--rule)", borderRadius: "var(--radius-btn)", fontFamily: "'Inter', sans-serif", fontWeight: 400, fontSize: "13px", color: "var(--ash)", cursor: "pointer" }}
+                    onClick={() => { void handleSubmit(q); }}
+                    disabled={isThinking || isStreaming}
+                  >
+                    {q}
+                  </button>
+                ))
+              )}
+            </div>
+
             <div
               className="flex items-center gap-3 px-4 rounded-2xl"
-              style={{ background: "#111E35", border: "1px solid #1E2D4A", minHeight: "52px", transition: "border-color 0.2s" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#3B7BF6"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "#1E2D4A"; }}
+              style={{ background: "var(--graphite)", border: "1px solid var(--rule)", minHeight: "52px", transition: "border-color 0.2s" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--volt-border)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--rule)"; }}
             >
-              <Paperclip size={18} style={{ color: "#4A5878", flexShrink: 0 }} />
+              <Paperclip size={18} style={{ color: "var(--ghost)", flexShrink: 0 }} />
               <input
                 ref={inputRef}
                 type="text"
                 placeholder="Ask anything about your documents…"
-                className="flex-1 bg-transparent border-none outline-none"
-                style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", color: "#F0F4FF", minWidth: 0 }}
+                className="flex-1 bg-transparent border-none outline-none placeholder-ghost"
+                style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", color: "var(--paper)", minWidth: 0 }}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -534,15 +554,15 @@ export default function Chat() {
               />
               <button
                 className="flex items-center justify-center rounded-full shrink-0"
-                style={{ width: "36px", height: "36px", background: isThinking || isStreaming || !inputValue.trim() ? "#1E2D4A" : "#3B7BF6", border: "none", cursor: isThinking || isStreaming || !inputValue.trim() ? "not-allowed" : "pointer", transition: "background 0.2s, opacity 0.2s", opacity: isThinking || isStreaming || !inputValue.trim() ? 0.5 : 1 }}
+                style={{ width: "36px", height: "36px", background: isThinking || isStreaming || !inputValue.trim() ? "var(--graphite)" : "var(--volt)", border: "none", cursor: isThinking || isStreaming || !inputValue.trim() ? "not-allowed" : "pointer", transition: "background 0.2s, opacity 0.2s", opacity: isThinking || isStreaming || !inputValue.trim() ? 0.5 : 1 }}
                 onClick={() => void handleSubmit(inputValue)}
                 disabled={isThinking || isStreaming || !inputValue.trim()}
               >
-                <Send size={16} style={{ color: "#F0F4FF" }} />
+                <Send size={16} style={{ color: "var(--paper)" }} />
               </button>
             </div>
             <div className="text-center mt-2">
-              <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 500, color: "#4A5878" }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 500, color: "var(--ghost)" }}>
                 Clausify AI only answers from your uploaded documents · Powered by AMD
               </span>
             </div>
@@ -560,8 +580,8 @@ export default function Chat() {
             className="w-full rounded-2xl p-5 animate-slideUp"
             style={{
               maxWidth: "560px",
-              background: "#0D1528",
-              border: "1px solid rgba(59,123,246,0.3)",
+              background: "var(--lead)",
+              border: "1px solid var(--volt-border)",
               boxShadow: "0 0 40px rgba(59,123,246,0.12)",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -572,46 +592,38 @@ export default function Chat() {
                 <div
                   style={{
                     width: "8px", height: "8px", borderRadius: "50%",
-                    background: sourceModal.docType === "image" ? "#3B7BF6" : "#EF4444",
+                    background: sourceModal.docType === "image" ? "var(--volt)" : "var(--conflict)",
                   }}
                 />
-                <span style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 600, color: "#8B9CC8" }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", fontWeight: 600, color: "var(--ash)" }}>
                   {sourceModal.source}
                 </span>
               </div>
               <button
                 onClick={() => setSourceModal(null)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#4A5878", display: "flex", alignItems: "center" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ghost)", display: "flex", alignItems: "center" }}
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Label */}
-            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#4A5878", marginBottom: "8px" }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ghost)", marginBottom: "8px" }}>
               DOCUMENT EXCERPT
             </div>
 
             {/* Quote */}
-            <div
-              className="rounded-xl p-4"
-              style={{
-                background: "rgba(59,123,246,0.04)",
-                border: "1px solid rgba(59,123,246,0.15)",
-                borderLeft: "3px solid #3B7BF6",
-              }}
-            >
-              <p style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "14px", lineHeight: 1.7, color: "#F0F4FF", wordBreak: "break-word" }}>
-                "{sourceModal.quote}"
-              </p>
-            </div>
+            <EvidenceBox
+              quote={sourceModal.quote}
+              style={{ fontSize: "14px", lineHeight: 1.7, borderLeft: "3px solid var(--volt)" }}
+            />
 
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setSourceModal(null)}
                 style={{
-                  fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 500,
-                  color: "#3B7BF6", background: "none", border: "none", cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif", fontSize: "13px", fontWeight: 500,
+                  color: "var(--volt)", background: "none", border: "none", cursor: "pointer",
                 }}
               >
                 Close

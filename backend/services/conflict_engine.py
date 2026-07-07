@@ -50,8 +50,16 @@ class ConflictEngine:
         all_conflicts: list[Conflict] = []
         conflict_id_counter = 1
 
-        # Compare all pairs of documents
-        for doc_a_name, doc_b_name in combinations(document_names, 2):
+        # Cap pairwise comparisons to avoid excessive LLM calls
+        # 8 docs = 28 pairs → too slow. Limit to 6 most relevant pairs.
+        MAX_PAIRS = 6
+        pairs = list(combinations(document_names, 2))
+        if len(pairs) > MAX_PAIRS:
+            logger.info(f"Limiting conflict detection from {len(pairs)} pairs to {MAX_PAIRS}")
+            pairs = pairs[:MAX_PAIRS]
+
+        # Compare document pairs
+        for doc_a_name, doc_b_name in pairs:
             doc_a_chunks = doc_chunks.get(doc_a_name, [])
             doc_b_chunks = doc_chunks.get(doc_b_name, [])
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavigationBar, AMDBadge } from "../components/NavigationBar";
 import { Card } from "../components/Card";
-import { RiskBadge, EvidenceTag } from "../components/Badges";
+import { RiskBadge, EvidenceTag, EvidenceBox } from "../components/Badges";
 import { PrimaryButton, GhostButton } from "../components/Buttons";
 import { Link } from "react-router";
 import {
@@ -17,19 +17,20 @@ import {
   Zap,
 } from "lucide-react";
 import { getDemoData } from "../../lib/api";
+import { motion } from "framer-motion";
 import type { Analysis, PreSeededMessage, UploadedDocument } from "../../lib/types";
 
-// AMD-branded loading screen
+// AMD-branded loading screen with premium animations
 function DemoLoader() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#080D1A" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--ink)" }}>
       <NavigationBar showDemo={false} />
       <div className="flex-1 flex items-center justify-center px-4">
         <div
           className="flex flex-col items-center gap-6 animate-fadeIn"
           style={{
-            background: "#0D1528",
-            border: "1px solid rgba(59,123,246,0.25)",
+            background: "var(--lead)",
+            border: "1px solid var(--volt-border)",
             borderRadius: "16px",
             padding: "clamp(24px, 6vw, 48px) clamp(24px, 8vw, 64px)",
             maxWidth: "400px",
@@ -42,40 +43,91 @@ function DemoLoader() {
           {/* Scan line effect */}
           <div className="scan-line" />
 
-          {/* AMD logo area */}
+          {/* AMD logo area with conic-gradient spinner ring */}
           <div style={{ position: "relative" }}>
-            <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: "rgba(237,28,36,0.1)", border: "1px solid rgba(237,28,36,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Zap size={28} style={{ color: "#ED1C24" }} />
+            <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: "rgba(237,28,36,0.1)", border: "1px solid rgba(237,28,36,0.25)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1 }}>
+              <Zap size={28} style={{ color: "var(--amd-signal)" }} />
             </div>
-            <div
+            {/* Animated rotating border */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
               style={{
                 position: "absolute",
                 inset: "-6px",
                 borderRadius: "20px",
-                border: "2px solid rgba(237,28,36,0.3)",
-                animation: "borderPulse 2s ease-in-out infinite",
+                background: "conic-gradient(from 0deg, transparent 0%, rgba(237,28,36,0.6) 25%, transparent 50%)",
+                zIndex: 0,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                inset: "-5px",
+                borderRadius: "19px",
+                background: "var(--lead)",
+                zIndex: 0,
+              }}
+            />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+              style={{
+                position: "absolute",
+                inset: "-6px",
+                borderRadius: "20px",
+                border: "2px solid transparent",
+                backgroundImage: "conic-gradient(from 0deg, transparent 60%, rgba(237,28,36,0.7) 80%, transparent 100%)",
+                backgroundOrigin: "border-box",
+                backgroundClip: "border-box",
+                WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                WebkitMaskComposite: "xor",
+                maskComposite: "exclude",
+                padding: "2px",
+                zIndex: 0,
               }}
             />
           </div>
 
+          {/* Staggered text reveal */}
           <div className="text-center">
-            <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF", marginBottom: "6px" }}>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)", marginBottom: "6px" }}
+            >
               Loading Demo
-            </div>
-            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#4A5878" }}>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", color: "var(--ghost)" }}
+            >
               Initializing AMD MI300X inference…
-            </div>
+            </motion.div>
           </div>
 
-          {/* Thinking dots */}
+          {/* Wave-style animated dots */}
           <div className="flex items-center gap-3">
-            <div className="animate-dot-1 w-2.5 h-2.5 rounded-full" style={{ background: "#3B7BF6" }} />
-            <div className="animate-dot-2 w-2.5 h-2.5 rounded-full" style={{ background: "#3B7BF6" }} />
-            <div className="animate-dot-3 w-2.5 h-2.5 rounded-full" style={{ background: "#3B7BF6" }} />
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="wave-dot"
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%",
+                  background: "var(--volt)",
+                  animationDelay: `${i * 0.15}s`,
+                }}
+              />
+            ))}
           </div>
 
           {/* Progress bar */}
-          <div style={{ width: "100%", height: "3px", background: "#1E2D4A", borderRadius: "2px", overflow: "hidden" }}>
+          <div style={{ width: "100%", height: "3px", background: "var(--rule)", borderRadius: "2px", overflow: "hidden" }}>
             <div className="shimmer-bar" style={{ height: "100%", borderRadius: "2px", width: "65%" }} />
           </div>
         </div>
@@ -103,10 +155,10 @@ export default function Demo() {
 
   if (error || !analysis) {
     return (
-      <div className="min-h-screen" style={{ background: "#080D1A" }}>
+      <div className="min-h-screen" style={{ background: "var(--ink)" }}>
         <NavigationBar showDemo={false} />
         <div className="flex flex-col items-center pt-24 gap-4 px-4 animate-fadeIn">
-          <div className="px-5 py-4 rounded-lg w-full" style={{ maxWidth: "480px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#EF4444" }}>
+          <div className="px-5 py-4 rounded-lg w-full" style={{ maxWidth: "480px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--error)" }}>
             {error ?? "Demo data unavailable."}
           </div>
           <Link to="/"><PrimaryButton>Upload your own documents</PrimaryButton></Link>
@@ -124,8 +176,8 @@ export default function Demo() {
   const SidebarContent = () => (
     <>
       <div className="p-5 flex items-center justify-between">
-        <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 500, color: "#8B9CC8" }}>Demo Documents</span>
-        <span className="px-2 py-0.5 rounded-full" style={{ background: "#1E2D4A", fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#F0F4FF" }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--ash)" }}>Demo Documents</span>
+        <span className="px-2 py-0.5 rounded-full" style={{ background: "var(--graphite)", fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--paper)" }}>
           {documents.length}
         </span>
       </div>
@@ -137,19 +189,19 @@ export default function Demo() {
             <div
               key={doc.id}
               className="px-4 py-3"
-              style={{ borderBottom: "1px solid rgba(30,45,74,0.3)", borderLeft: "2px solid transparent", transition: "background 0.15s, border-left-color 0.15s", cursor: "default" }}
-              onMouseOver={(e) => { e.currentTarget.style.background = "#111E35"; e.currentTarget.style.borderLeftColor = "#3B7BF6"; }}
+              style={{ borderBottom: "1px solid rgba(42,45,62,0.5)", borderLeft: "2px solid transparent", transition: "background 0.15s, border-left-color 0.15s", cursor: "default" }}
+              onMouseOver={(e) => { e.currentTarget.style.background = "var(--graphite)"; e.currentTarget.style.borderLeftColor = "var(--volt)"; }}
               onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderLeftColor = "transparent"; }}
             >
               <div className="flex items-start gap-3">
-                <div className="flex items-center justify-center rounded-md shrink-0" style={{ width: "24px", height: "24px", background: isImage ? "rgba(59,123,246,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${isImage ? "rgba(59,123,246,0.3)" : "rgba(239,68,68,0.3)"}` }}>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: "9px", fontWeight: 600, color: isImage ? "#3B7BF6" : "#EF4444" }}>
+                <div className="flex items-center justify-center rounded-md shrink-0" style={{ width: "24px", height: "24px", background: isImage ? "rgba(59,123,246,0.1)" : "rgba(237,28,36,0.1)", border: `1px solid ${isImage ? "rgba(59,123,246,0.3)" : "rgba(237,28,36,0.3)"}` }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", fontWeight: 600, color: isImage ? "var(--volt)" : "var(--conflict)" }}>
                     {isImage ? "IMG" : "PDF"}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="truncate" style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 500, color: "#F0F4FF" }}>{doc.filename}</div>
-                  <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "11px", color: "#10B981" }}>
+                  <div className="truncate" style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--paper)" }}>{doc.filename}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", color: "var(--cleared)" }}>
                     {isImage ? "Image · OCR Complete" : "Processed"}
                   </div>
                 </div>
@@ -159,7 +211,7 @@ export default function Demo() {
         })}
       </div>
 
-      <div style={{ borderTop: "1px solid #1E2D4A", marginTop: "16px" }}>
+      <div style={{ borderTop: "1px solid var(--rule)", marginTop: "16px" }}>
         <div className="p-4 space-y-3">
           <Link to="/" style={{ display: "block" }}>
             <PrimaryButton style={{ width: "100%" }}>Upload Your Documents</PrimaryButton>
@@ -171,21 +223,24 @@ export default function Demo() {
   );
 
   return (
-    <div className="min-h-screen animate-fadeIn" style={{ background: "#080D1A" }}>
+    <div className="min-h-screen animate-fadeIn" style={{ background: "var(--ink)" }}>
       <NavigationBar showDemo={false} />
 
       {/* Demo Banner */}
       <div
         className="flex flex-wrap items-center justify-between px-4 sm:px-8 py-3 gap-3"
-        style={{ background: "rgba(245,158,11,0.08)", borderBottom: "1px solid rgba(245,158,11,0.2)" }}
+        style={{ background: "rgba(245,166,35,0.08)", borderBottom: "1px solid rgba(245,166,35,0.25)" }}
       >
         <div className="flex items-center gap-2">
-          <Target size={15} style={{ color: "#F59E0B", flexShrink: 0 }} />
-          <span style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 500, color: "#F59E0B" }}>
-            Demo Mode — Pre-loaded sample procurement documents
+          <Target size={15} style={{ color: "var(--caution)", flexShrink: 0 }} />
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "13px", fontWeight: 600, color: "var(--caution)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Demo Mode
+          </span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", fontWeight: 500, color: "var(--caution)" }}>
+            — Pre-loaded sample procurement documents
           </span>
         </div>
-        <Link to="/" style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 500, color: "#3B7BF6", textDecoration: "none", whiteSpace: "nowrap" }}>
+        <Link to="/" style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", fontWeight: 500, color: "var(--volt)", textDecoration: "none", whiteSpace: "nowrap" }}>
           Try with your own →
         </Link>
       </div>
@@ -194,7 +249,7 @@ export default function Demo() {
         {/* Desktop sidebar */}
         <div
           className="hidden md:block shrink-0"
-          style={{ width: "300px", minHeight: "calc(100vh - 120px)", background: "#0D1528", borderRight: "1px solid #1E2D4A" }}
+          style={{ width: "300px", minHeight: "calc(100vh - 120px)", background: "var(--lead)", borderRight: "1px solid var(--rule)" }}
         >
           <SidebarContent />
         </div>
@@ -204,12 +259,12 @@ export default function Demo() {
           <div className="md:hidden fixed inset-0 z-50 animate-fadeIn" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setSidebarOpen(false)}>
             <div
               className="animate-slideDown"
-              style={{ width: "min(300px, 85vw)", height: "100%", background: "#0D1528", borderRight: "1px solid #1E2D4A", overflowY: "auto" }}
+              style={{ width: "min(300px, 85vw)", height: "100%", background: "var(--lead)", borderRight: "1px solid var(--rule)", overflowY: "auto" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid #1E2D4A" }}>
-                <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "15px", fontWeight: 600, color: "#F0F4FF" }}>Demo Documents</span>
-                <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8B9CC8" }}>
+              <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid var(--rule)" }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "var(--paper)" }}>Demo Documents</span>
+                <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ash)" }}>
                   <X size={18} />
                 </button>
               </div>
@@ -223,22 +278,22 @@ export default function Demo() {
           {/* Sub-header */}
           <div
             className="flex flex-wrap items-center justify-between px-4 sm:px-8 py-4 gap-3"
-            style={{ borderBottom: "1px solid #1E2D4A" }}
+            style={{ borderBottom: "1px solid var(--rule)" }}
           >
             <div className="flex items-center gap-3">
               {/* Mobile sidebar toggle */}
               <button
                 className="md:hidden flex items-center justify-center"
                 onClick={() => setSidebarOpen(true)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#8B9CC8", padding: "4px" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ash)", padding: "4px" }}
               >
                 <PanelLeft size={18} />
               </button>
               <div>
-                <h2 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "clamp(16px, 3vw, 20px)", fontWeight: 600, color: "#F0F4FF" }}>
+                <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(16px, 3vw, 20px)", fontWeight: 700, color: "var(--paper)" }}>
                   Sample Procurement Analysis
                 </h2>
-                <span style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#4A5878" }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--ghost)" }}>
                   {documents.length} documents · Demo data
                 </span>
               </div>
@@ -249,32 +304,32 @@ export default function Demo() {
           <div className="p-4 sm:p-6 md:p-8 space-y-5">
             {/* Conflict Alert */}
             {hasConflicts && primaryConflict && (
-              <div className="rounded-lg p-4 animate-slideDown" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)", borderLeft: "4px solid #EF4444" }}>
+              <div className="rounded-lg p-4 animate-slideDown" style={{ background: "rgba(237,28,36,0.06)", border: "1px solid rgba(237,28,36,0.25)", borderLeft: "4px solid var(--amd-signal)" }}>
                 <div className="flex items-center gap-3 mb-4 flex-wrap">
-                  <AlertTriangle size={20} style={{ color: "#EF4444", flexShrink: 0 }} />
-                  <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "16px", fontWeight: 600, color: "#EF4444" }}>Conflict Detected</span>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#8B9CC8" }}>
+                  <AlertTriangle size={20} style={{ color: "var(--amd-signal)", flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "16px", fontWeight: 700, color: "var(--amd-signal)" }}>Conflict Detected</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--ash)" }}>
                     {analysis.conflicts.length} critical conflict{analysis.conflicts.length !== 1 ? "s" : ""} found
                   </span>
                 </div>
 
-                <div style={{ paddingTop: "16px", borderTop: "1px solid rgba(239,68,68,0.15)" }}>
-                  <div className="rounded-lg p-4" style={{ background: "rgba(239,68,68,0.04)" }}>
+                <div style={{ paddingTop: "16px", borderTop: "1px solid rgba(237,28,36,0.15)" }}>
+                  <div className="rounded-lg p-4" style={{ background: "rgba(237,28,36,0.04)" }}>
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
-                      <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "#EF4444", textTransform: "uppercase" }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", color: "var(--amd-signal)", textTransform: "uppercase" }}>
                         {primaryConflict.type}
                       </span>
                       <RiskBadge variant={primaryConflict.severity} />
                     </div>
                     <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
                       {[primaryConflict.documentA, primaryConflict.documentB].map((doc, i) => (
-                        <div key={i} className="rounded-lg p-3" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                        <div key={i} className="rounded-lg p-3" style={{ background: "rgba(237,28,36,0.06)", border: "1px solid rgba(237,28,36,0.15)" }}>
                           <div className="mb-2"><EvidenceTag filename={doc.name} /></div>
-                          <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: "13px", color: "#F0F4FF" }}>"{doc.excerpt}"</div>
+                          <EvidenceBox quote={doc.excerpt} style={{ background: "var(--paper)" }} />
                         </div>
                       ))}
                     </div>
-                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", lineHeight: 1.6, color: "#8B9CC8" }}>{primaryConflict.recommendedAction}</p>
+                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", lineHeight: 1.6, color: "var(--ash)" }}>{primaryConflict.recommendedAction}</p>
                   </div>
                 </div>
               </div>
@@ -285,17 +340,17 @@ export default function Demo() {
               {/* Executive Summary */}
               <Card>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF" }}>Executive Summary</h3>
-                  <FileText size={18} style={{ color: "#4A5878" }} />
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)" }}>Executive Summary</h3>
+                  <FileText size={18} style={{ color: "var(--ghost)" }} />
                 </div>
-                <div style={{ height: "1px", background: "#1E2D4A", margin: "12px 0" }} />
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#8B9CC8", marginBottom: "16px" }}>
+                <div style={{ height: "1px", background: "var(--rule)", margin: "12px 0" }} />
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--ash)", marginBottom: "16px" }}>
                   {analysis.executiveSummary}
                 </p>
-                <div style={{ borderTop: "1px solid #1E2D4A", paddingTop: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
                   <div className="flex items-center gap-1.5">
-                    <Cpu size={12} style={{ color: "#4A5878" }} />
-                    <span style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#4A5878" }}>Generated by AMD Llama 3.2 Vision</span>
+                    <Cpu size={12} style={{ color: "var(--ghost)" }} />
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--ghost)" }}>Generated by AMD Llama 3.2 Vision</span>
                   </div>
                   <AMDBadge />
                 </div>
@@ -304,16 +359,16 @@ export default function Demo() {
               {/* Risk Analysis */}
               <Card>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF" }}>Risk Analysis</h3>
-                  <AlertTriangle size={18} style={{ color: "#4A5878" }} />
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)" }}>Risk Analysis</h3>
+                  <AlertTriangle size={18} style={{ color: "var(--ghost)" }} />
                 </div>
-                <div style={{ height: "1px", background: "#1E2D4A", margin: "12px 0" }} />
+                <div style={{ height: "1px", background: "var(--rule)", margin: "12px 0" }} />
                 <div className="space-y-3">
                   {analysis.risks.map((risk) => (
                     <div key={risk.id} className="flex gap-3">
                       <RiskBadge variant={risk.level} />
                       <div className="flex-1 min-w-0">
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#F0F4FF", marginBottom: "4px" }}>{risk.description}</p>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--paper)", marginBottom: "4px" }}>{risk.description}</p>
                         <EvidenceTag filename={risk.sourceDocument} />
                       </div>
                     </div>
@@ -324,29 +379,29 @@ export default function Demo() {
               {/* Comparison Matrix */}
               <Card>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF" }}>Document Comparison</h3>
-                  <Scale size={18} style={{ color: "#4A5878" }} />
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)" }}>Document Comparison</h3>
+                  <Scale size={18} style={{ color: "var(--ghost)" }} />
                 </div>
-                <div style={{ height: "1px", background: "#1E2D4A", margin: "12px 0" }} />
-                <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid #1E2D4A" }}>
+                <div style={{ height: "1px", background: "var(--rule)", margin: "12px 0" }} />
+                <div className="rounded-lg overflow-x-auto" style={{ border: "1px solid var(--rule)" }}>
                   <table style={{ width: "100%", minWidth: "360px" }}>
                     <thead>
-                      <tr style={{ background: "#111E35", height: "40px" }}>
-                        <th className="px-4 text-left" style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#4A5878", whiteSpace: "nowrap" }}>Feature</th>
+                      <tr style={{ background: "var(--graphite)", height: "40px" }}>
+                        <th className="px-4 text-left" style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--ghost)", whiteSpace: "nowrap" }}>Feature</th>
                         {matrixColumns.map((col) => (
-                          <th key={col} className="px-4 text-left" style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#4A5878", whiteSpace: "nowrap" }}>{col}</th>
+                          <th key={col} className="px-4 text-left" style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--ghost)", whiteSpace: "nowrap" }}>{col}</th>
                         ))}
-                        <th className="px-4 text-left" style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 500, color: "#4A5878", whiteSpace: "nowrap" }}>Winner</th>
+                        <th className="px-4 text-left" style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", fontWeight: 500, color: "var(--ghost)", whiteSpace: "nowrap" }}>Winner</th>
                       </tr>
                     </thead>
                     <tbody>
                       {analysis.comparisonMatrix.map((row, idx) => (
-                        <tr key={row.field} style={{ background: idx % 2 === 0 ? "#0D1528" : "rgba(17,30,53,0.5)", height: "48px", borderTop: "1px solid #1E2D4A" }}>
-                          <td className="px-4" style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#F0F4FF", whiteSpace: "nowrap" }}>{row.field}</td>
+                        <tr key={row.field} style={{ background: idx % 2 === 0 ? "var(--lead)" : "rgba(37,40,54,0.5)", height: "48px", borderTop: "1px solid var(--rule)" }}>
+                          <td className="px-4" style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--paper)", whiteSpace: "nowrap" }}>{row.field}</td>
                           {matrixColumns.map((col) => (
-                            <td key={col} className="px-4" style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#F0F4FF" }}>{row.values[col] ?? "—"}</td>
+                            <td key={col} className="px-4" style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--paper)" }}>{row.values[col] ?? "—"}</td>
                           ))}
-                          <td className="px-4" style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#10B981", whiteSpace: "nowrap" }}>{row.winner}</td>
+                          <td className="px-4" style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--cleared)", whiteSpace: "nowrap" }}>{row.winner}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -355,28 +410,28 @@ export default function Demo() {
               </Card>
 
               {/* AI Recommendation */}
-              <Card style={{ background: "rgba(59,123,246,0.04)", border: "1px solid rgba(59,123,246,0.15)" }}>
+              <Card style={{ background: "var(--volt-dim)", border: "1px solid var(--volt-border)" }}>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF" }}>AI Recommendation</h3>
-                  <Lightbulb size={18} style={{ color: "#4A5878" }} />
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)" }}>AI Recommendation</h3>
+                  <Lightbulb size={18} style={{ color: "var(--ghost)" }} />
                 </div>
-                <div style={{ height: "1px", background: "rgba(59,123,246,0.15)", margin: "12px 0" }} />
-                <div className="inline-block px-4 py-2 rounded-full mb-4" style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)" }}>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 500, color: "#10B981" }}>{analysis.recommendation.title}</span>
+                <div style={{ height: "1px", background: "var(--volt-border)", margin: "12px 0" }} />
+                <div className="inline-block px-4 py-2 rounded-full mb-4" style={{ background: "rgba(0,196,140,0.12)", border: "1px solid rgba(0,196,140,0.25)" }}>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--cleared)" }}>{analysis.recommendation.title}</span>
                 </div>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", lineHeight: 1.6, color: "#8B9CC8" }}>{analysis.recommendation.summary}</p>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", lineHeight: 1.6, color: "var(--ash)" }}>{analysis.recommendation.summary}</p>
               </Card>
             </div>
 
             {/* Chat Preview + CTA */}
-            <div className="rounded-xl p-5 sm:p-6" style={{ background: "#0D1528", border: "1px solid #1E2D4A" }}>
+            <div className="rounded-xl p-5 sm:p-6" style={{ background: "var(--lead)", border: "1px solid var(--rule)" }}>
               <div className="flex items-center gap-3 mb-5">
-                <div style={{ width: "36px", height: "36px", flexShrink: 0, clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)", background: "linear-gradient(135deg, #1E2D4A, #0D1528)", border: "2px solid #3B7BF6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: "11px", fontWeight: "bold", color: "#3B7BF6" }}>AI</span>
+                <div style={{ width: "40px", height: "40px", flexShrink: 0, borderRadius: "10px", background: "var(--graphite)", border: "1px solid rgba(59,123,246,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <FileText size={18} style={{ color: "var(--volt)" }} />
                 </div>
                 <div>
-                  <h3 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF" }}>Decision Copilot Preview</h3>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", color: "#8B9CC8" }}>See how the AI answers questions</p>
+                  <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)" }}>Decision Copilot Preview</h3>
+                  <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "13px", color: "var(--ash)" }}>See how the AI answers questions</p>
                 </div>
               </div>
 
@@ -393,36 +448,23 @@ export default function Demo() {
                           className="rounded-xl px-3 py-2"
                           style={
                             isUser
-                              ? { background: "#1E2D4A", maxWidth: "min(400px, 90%)" }
+                              ? { background: "var(--graphite)", maxWidth: "min(400px, 90%)" }
                               : {
-                                  background: "rgba(59,123,246,0.04)",
-                                  border: "1px solid rgba(59,123,246,0.15)",
-                                  borderLeft: "3px solid #3B7BF6",
+                                  background: "var(--lead)",
+                                  border: "1px solid var(--rule)",
+                                  borderLeft: "3px solid var(--volt)",
                                   maxWidth: "min(500px, 100%)",
                                   padding: "12px",
                                 }
                           }
                         >
-                          <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", lineHeight: 1.6, color: "#F0F4FF" }}>
+                          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", lineHeight: 1.6, color: "var(--paper)" }}>
                             {displayText}
                           </p>
                           {!isUser && msg.structuredResponse?.evidence && msg.structuredResponse.evidence.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
+                            <div className="mt-2 space-y-1.5">
                               {msg.structuredResponse.evidence.map((ev, i) => (
-                                <span
-                                  key={i}
-                                  style={{
-                                    fontFamily: "Inter, sans-serif",
-                                    fontSize: "11px",
-                                    color: "#3B7BF6",
-                                    background: "rgba(59,123,246,0.08)",
-                                    border: "1px solid rgba(59,123,246,0.2)",
-                                    borderRadius: "4px",
-                                    padding: "2px 6px",
-                                  }}
-                                >
-                                  {ev.sourceDocument}
-                                </span>
+                                <EvidenceBox key={i} quote={ev.quote} />
                               ))}
                             </div>
                           )}
@@ -433,13 +475,13 @@ export default function Demo() {
                 ) : (
                   <>
                     <div className="flex justify-end">
-                      <div className="rounded-xl px-3 py-2" style={{ background: "#1E2D4A", maxWidth: "min(400px, 90%)" }}>
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", color: "#F0F4FF" }}>Which supplier is cheapest?</p>
+                      <div className="rounded-xl px-3 py-2" style={{ background: "var(--graphite)", maxWidth: "min(400px, 90%)" }}>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", color: "var(--paper)" }}>Which supplier is cheapest?</p>
                       </div>
                     </div>
                     <div className="flex justify-start">
-                      <div className="rounded-xl p-3" style={{ background: "rgba(59,123,246,0.04)", border: "1px solid rgba(59,123,246,0.15)", borderLeft: "3px solid #3B7BF6", maxWidth: "min(500px, 100%)" }}>
-                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", lineHeight: 1.6, color: "#F0F4FF" }}>
+                      <div className="rounded-xl p-3" style={{ background: "var(--lead)", border: "1px solid var(--rule)", borderLeft: "3px solid var(--volt)", maxWidth: "min(500px, 100%)" }}>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px", lineHeight: 1.6, color: "var(--paper)" }}>
                           {(() => {
                             const priceRow = analysis.comparisonMatrix.find((r) => r.field.toLowerCase().includes("price"));
                             if (!priceRow) return analysis.recommendation.summary;
@@ -452,8 +494,8 @@ export default function Demo() {
                 )}
               </div>
 
-              <div className="rounded-lg p-4 sm:p-5" style={{ background: "rgba(59,123,246,0.06)", border: "1px solid rgba(59,123,246,0.15)" }}>
-                <h4 style={{ fontFamily: "DM Sans, sans-serif", fontSize: "18px", fontWeight: 600, color: "#F0F4FF", marginBottom: "14px" }}>
+              <div className="rounded-lg p-4 sm:p-5" style={{ background: "var(--volt-dim)", border: "1px solid var(--volt-border)" }}>
+                <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "18px", fontWeight: 700, color: "var(--paper)", marginBottom: "14px" }}>
                   Ready to analyze your own documents?
                 </h4>
                 <div className="flex flex-wrap gap-3">

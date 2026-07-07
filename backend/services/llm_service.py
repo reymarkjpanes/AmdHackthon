@@ -75,16 +75,17 @@ class LLMService:
             logger.info(f"LLM provider: CLAUDE ({CLAUDE_MODEL})")
 
         else:
-            # AMD Developer Cloud
-            self._amd_endpoint = os.getenv("AMD_CLOUD_ENDPOINT", "")
+            # AMD: Fireworks AI — runs on AMD Instinct MI300X hardware
+            self._amd_endpoint = os.getenv("AMD_CLOUD_ENDPOINT", "https://api.fireworks.ai/inference/v1")
             self._amd_api_key = os.getenv("AMD_CLOUD_API_KEY", "")
-            if self._amd_endpoint:
-                logger.info(f"LLM provider: AMD Developer Cloud ({self._amd_endpoint})")
-            else:
+            self._amd_model = os.getenv("AMD_MODEL", "accounts/fireworks/models/llama-v3p3-70b-instruct")
+            if not self._amd_api_key:
                 raise ConfigurationError(
-                    "AMD_CLOUD_ENDPOINT is required when LLM_PROVIDER=AMD. "
-                    "Set it in your .env file."
+                    "AMD_CLOUD_API_KEY is required when LLM_PROVIDER=AMD. "
+                    "Get it from Fireworks AI: https://app.fireworks.ai/settings/api-keys"
                 )
+            logger.info(f"LLM provider: AMD/Fireworks (model: {self._amd_model})")
+            logger.info(f"AMD endpoint: {self._amd_endpoint}")
 
     async def complete(
         self,
@@ -162,34 +163,42 @@ class LLMService:
         max_tokens: int,
     ) -> str:
         """
-        # AMD: LLM inference via AMD Developer Cloud API
-        # AMD: Model: Llama 3.2 Vision 11B on MI300X hardware
+        # AMD: LLM inference via Fireworks AI running on AMD Instinct MI300X
+        # AMD: Model: Llama 3.3 70B Instruct (same as Groq but on AMD hardware)
         """
         import httpx
 
         headers = {
             "Authorization": f"Bearer {self._amd_api_key}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
         }
         payload = {
-            "model": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+            "model": self._amd_model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
             "max_tokens": max_tokens,
+            "temperature": 0.1,
         }
 
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                f"{self._amd_endpoint}/chat/completions",
-                json=payload,
-                headers=headers,
-            )
-            response.raise_for_status()
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            try:
+                response = await client.post(
+                    f"{self._amd_endpoint}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                )
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                exc_str = str(exc).lower()
+                if "429" in exc_str or "rate limit" in exc_str:
+                    raise LLMRateLimitError(f"AMD/Fireworks rate limit: {exc}") from exc
+                raise
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            logger.info(f"[AMD] Response received ({len(content)} chars)")
+            logger.info(f"[AMD/Fireworks] Response received ({len(content)} chars)")
             return content
 
     async def _parse_with_retry(
@@ -228,9 +237,13 @@ class LLMService:
 
 
 def _strip_json_fences(text: str) -> str:
-    """Remove markdown code fences and sanitize control characters from LLM responses."""
+    """Remove markdown code fences, thinking tags, and extract JSON from verbose LLM responses."""
     import re
     text = text.strip()
+    # Strip <think>...</think> blocks (DeepSeek reasoning models)
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    text = text.strip()
+    # Strip markdown code fences
     if text.startswith("```"):
         lines = text.split("\n")
         if lines[-1].strip() == "```":
@@ -238,6 +251,26 @@ def _strip_json_fences(text: str) -> str:
         else:
             lines = lines[1:]
         text = "\n".join(lines)
+    text = text.strip()
+    # If the text doesn't start with { or [, try to find JSON in the response
+    if text and text[0] not in ('{', '['):
+        # Look for the first { or [ and extract from there
+        json_start = -1
+        for i, ch in enumerate(text):
+            if ch in ('{', '['):
+                json_start = i
+                break
+        if json_start >= 0:
+            # Find the matching closing bracket
+            candidate = text[json_start:]
+            # Try progressively shorter substrings to find valid JSON
+            bracket = candidate[0]
+            close_bracket = '}' if bracket == '{' else ']'
+            # Find the last occurrence of the closing bracket
+            last_close = candidate.rfind(close_bracket)
+            if last_close > 0:
+                candidate = candidate[:last_close + 1]
+            text = candidate
     text = text.strip()
     # Remove control characters that break JSON parsing (keep \n and \t as escaped)
     text = text.replace('\r\n', '\n').replace('\r', '\n')

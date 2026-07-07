@@ -40,8 +40,33 @@
 }
 
 @keyframes borderPulse {
-  0%, 100% { border-color: rgba(59, 123, 246, 0.3); }
-  50%       { border-color: rgba(59, 123, 246, 0.8); }
+  0%, 100% { border-color: rgba(59, 123, 246, 0.3); box-shadow: 0 0 40px rgba(59,123,246,0.1); }
+  50%       { border-color: rgba(59, 123, 246, 0.8); box-shadow: 0 0 40px rgba(59,123,246,0.25); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(28px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(28px) rotate(-360deg); }
+}
+
+@keyframes progressGlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes waveDot {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes conicSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes voltPulse {
+  0%, 100% { transform: scale(1);   opacity: 0.4; }
+  50%       { transform: scale(1.08); opacity: 0.8; }
 }
 
 /* ── Reusable animation utilities ─────────────────────────────────────────── */
@@ -55,10 +80,54 @@
 .animate-dot-2 { animation: pulseDot 1.4s ease-in-out 0.2s infinite both; }
 .animate-dot-3 { animation: pulseDot 1.4s ease-in-out 0.4s infinite both; }
 
+.animate-voltPulse { animation: voltPulse 2s ease-in-out infinite; }
+
 .shimmer-bar {
-  background: linear-gradient(90deg, #3B7BF6, #6B9FFF, #3B7BF6);
+  background: linear-gradient(90deg, #3B7BF6, #6BA0FF, #3B7BF6);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
+}
+
+.progress-bar-premium {
+  background: linear-gradient(90deg, rgba(59,123,246,0.2), rgba(59,123,246,0.8), rgba(107,160,255,1), rgba(59,123,246,0.8), rgba(59,123,246,0.2));
+  background-size: 200% 100%;
+  animation: progressGlow 2s linear infinite;
+  position: relative;
+  border-radius: 2px;
+}
+
+.progress-bar-premium::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(59,123,246,0.9), 0 0 20px rgba(59,123,246,0.5);
+}
+
+.orbit-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--volt);
+  animation: orbit linear infinite;
+  box-shadow: 0 0 6px rgba(59,123,246,0.6);
+}
+
+.wave-dot {
+  animation: waveDot 1.2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(59,123,246,0.5);
+}
+
+.conic-spinner {
+  background: conic-gradient(from 0deg, transparent, var(--amd-signal), transparent);
+  animation: conicSpin 1.5s linear infinite;
+  border-radius: 50%;
 }
 
 .scan-line {
@@ -83,4 +152,33 @@ html, body {
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+/* ── Placeholder color utility (inline styles can't target ::placeholder) ─── */
+.placeholder-ghost::placeholder {
+  color: var(--ghost);
+}
+
+/* ── Hide scrollbar for horizontal chip rails on mobile ───────────────────── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Custom dark scrollbar for card content ───────────────────────────────── */
+.card-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.card-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.card-scroll::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 4px;
+}
+.card-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--ghost);
 }

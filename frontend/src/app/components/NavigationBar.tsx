@@ -14,86 +14,126 @@ export function NavigationBar({ showDemo = true }: NavigationBarProps) {
       <nav
         className="w-full flex items-center justify-between safe-top"
         style={{
-          background: "rgba(8, 13, 26, 0.95)",
-          height: "64px",
+          background: "rgba(12, 14, 20, 0.96)",
+          backdropFilter: "blur(12px)",
+          height: "60px",
           paddingLeft: "clamp(16px, 4vw, 40px)",
           paddingRight: "clamp(16px, 4vw, 40px)",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-          backdropFilter: "blur(8px)",
+          borderBottom: "1px solid var(--rule)",
           position: "sticky",
           top: 0,
           zIndex: 50,
         }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center">
+        <div className="flex items-center gap-4">
+          <Link to="/" className="flex items-center" style={{ gap: "9px" }}>
             <span
+              aria-hidden="true"
               style={{
-                fontFamily: "DM Sans, sans-serif",
-                fontSize: "clamp(18px, 3vw, 22px)",
-                color: "#F0F4FF",
-                fontWeight: "bold",
-                letterSpacing: "-0.02em",
+                width: "14px",
+                height: "14px",
+                background: "var(--volt)",
+                borderRadius: "2px",
+                transform: "rotate(45deg)",
+                display: "inline-block",
+                flexShrink: 0,
               }}
-            >
-              Clausify
-            </span>
-            <span
-              style={{
-                fontFamily: "DM Sans, sans-serif",
-                fontSize: "clamp(18px, 3vw, 22px)",
-                color: "#3B7BF6",
-                fontWeight: "bold",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              AI
+            />
+            <span style={{ display: "inline-flex", marginLeft: "9px" }}>
+              <span
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: "clamp(18px, 3vw, 22px)",
+                  color: "var(--paper)",
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Clausify
+              </span>
+              <span
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: "clamp(18px, 3vw, 22px)",
+                  color: "var(--volt)",
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                AI
+              </span>
             </span>
           </Link>
-          <div className="hidden sm:flex">
-            <AMDBadge />
+
+          {/* Nav links (desktop only) */}
+          <div className="hidden sm:flex items-center">
+            <Link
+              to="/#how-it-works"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "14px",
+                fontWeight: 500,
+                color: "var(--ash)",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = "var(--paper)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = "var(--ash)";
+              }}
+            >
+              How it works
+            </Link>
           </div>
         </div>
 
         {/* Desktop buttons */}
         {showDemo && (
           <div className="hidden sm:flex items-center gap-3">
+            <AMDBadge />
             <Link to="/demo">
               <button
                 className="px-4 py-2 h-9 rounded-lg border transition-all"
                 style={{
                   background: "transparent",
-                  borderColor: "#1E2D4A",
-                  color: "#8B9CC8",
+                  borderColor: "var(--rule)",
+                  color: "var(--ash)",
+                  fontFamily: "'Inter', sans-serif",
                   fontSize: "14px",
                   fontWeight: 500,
+                  borderRadius: "var(--radius-btn)",
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.borderColor = "#3B7BF6";
-                  e.currentTarget.style.color = "#F0F4FF";
+                  e.currentTarget.style.borderColor = "var(--volt-border)";
+                  e.currentTarget.style.color = "var(--paper)";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.borderColor = "#1E2D4A";
-                  e.currentTarget.style.color = "#8B9CC8";
+                  e.currentTarget.style.borderColor = "var(--rule)";
+                  e.currentTarget.style.color = "var(--ash)";
                 }}
               >
-                View Demo
+                Try Demo
               </button>
             </Link>
             <Link to="/">
               <button
                 className="px-4 py-2 h-9 rounded-lg transition-all"
                 style={{
-                  background: "#3B7BF6",
-                  color: "#F0F4FF",
+                  background: "var(--volt)",
+                  color: "var(--ink)",
+                  fontFamily: "'Inter', sans-serif",
                   fontSize: "14px",
                   fontWeight: 500,
                   border: "none",
-                  boxShadow: "0 0 20px rgba(59,123,246,0.3)",
+                  borderRadius: "var(--radius-btn)",
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.background = "#2D6AE0"; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = "#3B7BF6"; }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.filter = "brightness(1.1)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.filter = "none";
+                }}
               >
                 Launch App
               </button>
@@ -101,22 +141,25 @@ export function NavigationBar({ showDemo = true }: NavigationBarProps) {
           </div>
         )}
 
-        {/* Mobile hamburger */}
+        {/* Mobile: logo + AMD badge only, plus hamburger */}
         {showDemo && (
-          <button
-            className="sm:hidden flex items-center justify-center"
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#F0F4FF",
-              padding: "8px",
-            }}
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          <div className="sm:hidden flex items-center gap-2">
+            <AMDBadge />
+            <button
+              className="flex items-center justify-center"
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--paper)",
+                padding: "8px",
+              }}
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         )}
       </nav>
 
@@ -126,11 +169,11 @@ export function NavigationBar({ showDemo = true }: NavigationBarProps) {
           className="sm:hidden animate-slideDown"
           style={{
             position: "fixed",
-            top: "64px",
+            top: "60px",
             left: 0,
             right: 0,
-            background: "rgba(8, 13, 26, 0.98)",
-            borderBottom: "1px solid #1E2D4A",
+            background: "rgba(12, 14, 20, 0.98)",
+            borderBottom: "1px solid var(--rule)",
             padding: "16px",
             zIndex: 49,
             display: "flex",
@@ -138,33 +181,35 @@ export function NavigationBar({ showDemo = true }: NavigationBarProps) {
             gap: "10px",
           }}
         >
-          <AMDBadge />
           <Link to="/demo" onClick={() => setMenuOpen(false)}>
             <button
               className="w-full px-4 py-3 rounded-lg border"
               style={{
                 background: "transparent",
-                borderColor: "#1E2D4A",
-                color: "#8B9CC8",
+                borderColor: "var(--rule)",
+                color: "var(--ash)",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: "15px",
                 fontWeight: 500,
                 cursor: "pointer",
+                borderRadius: "var(--radius-btn)",
               }}
             >
-              View Demo
+              Try Demo
             </button>
           </Link>
           <Link to="/" onClick={() => setMenuOpen(false)}>
             <button
               className="w-full px-4 py-3 rounded-lg"
               style={{
-                background: "#3B7BF6",
-                color: "#F0F4FF",
+                background: "var(--volt)",
+                color: "var(--ink)",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: "15px",
                 fontWeight: 500,
                 border: "none",
                 cursor: "pointer",
-                boxShadow: "0 0 20px rgba(59,123,246,0.3)",
+                borderRadius: "var(--radius-btn)",
               }}
             >
               Launch App
@@ -186,12 +231,12 @@ export function AMDBadge() {
         height: "26px",
       }}
     >
-      <Zap size={12} style={{ color: "#ED1C24" }} />
+      <Zap size={12} style={{ color: "var(--amd-signal)" }} />
       <span
         style={{
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "'Inter', sans-serif",
           fontSize: "12px",
-          color: "#ED1C24",
+          color: "var(--amd-signal)",
           fontWeight: 500,
           lineHeight: "16px",
           whiteSpace: "nowrap",
