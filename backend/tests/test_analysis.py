@@ -137,39 +137,37 @@ async def test_llm_provider_routing_amd_stub():
     When LLM_PROVIDER=AMD with a valid endpoint, the service can be created.
     """
     import os
-    os.environ["LLM_PROVIDER"] = "AMD"
-    os.environ["AMD_CLOUD_ENDPOINT"] = "https://api.amd-developer-cloud.com/v1"
-    os.environ["AMD_CLOUD_API_KEY"] = "test-key"
+    os.environ["FIREWORKS_API_KEY"] = "test-key"
+    os.environ["FIREWORKS_ENDPOINT"] = "https://api.fireworks.ai/inference/v1"
 
     # Re-import to pick up env changes
     import importlib
     import services.llm_service as llm_module
     importlib.reload(llm_module)
 
-    service = llm_module.LLMService.__new__(llm_module.LLMService)
-    service.provider = llm_module.LLMProvider.AMD
-    service._amd_endpoint = "https://api.amd-developer-cloud.com/v1"
-    service._amd_api_key = "test-key"
-
-    assert service.provider == llm_module.LLMProvider.AMD
-    assert service._amd_endpoint.startswith("https://")
+    service = llm_module.LLMService()
+    assert service._api_key == "test-key"
+    assert service._endpoint.startswith("https://")
 
     # Cleanup
-    os.environ.pop("AMD_CLOUD_ENDPOINT", None)
-    os.environ.pop("AMD_CLOUD_API_KEY", None)
+    os.environ.pop("FIREWORKS_API_KEY", None)
+    os.environ.pop("FIREWORKS_ENDPOINT", None)
 
 
 def test_llm_provider_defaults_to_claude():
-    """LLM_PROVIDER env var defaults to CLAUDE when not set."""
+    """LLMService raises ValueError if FIREWORKS_API_KEY is not set."""
     import os
-    saved = os.environ.pop("LLM_PROVIDER", None)
+    import pytest
+    from services.llm_service import LLMService
+    
+    saved = os.environ.pop("FIREWORKS_API_KEY", None)
     try:
-        from services.llm_service import LLMProvider
-        provider_str = os.getenv("LLM_PROVIDER", "CLAUDE").upper()
-        assert provider_str == "CLAUDE"
+        with pytest.raises(ValueError) as excinfo:
+            LLMService()
+        assert "FIREWORKS_API_KEY is required" in str(excinfo.value)
     finally:
         if saved:
-            os.environ["LLM_PROVIDER"] = saved
+            os.environ["FIREWORKS_API_KEY"] = saved
 
 
 # ---- Property 13: PDF report header fields ----

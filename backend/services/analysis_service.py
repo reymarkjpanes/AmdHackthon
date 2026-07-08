@@ -86,6 +86,13 @@ class AnalysisService:
         self.llm_service = llm_service
         self.conflict_engine = conflict_engine
         self.session_manager = session_manager
+        self._semaphore = asyncio.Semaphore(1)  # Protect free tier API limits from concurrent spikes
+
+    async def _sem_wrapped(self, coro):
+        """Acquire semaphore and add a small pacing delay to prevent rate limiting."""
+        async with self._semaphore:
+            await asyncio.sleep(0.3)
+            return await coro
 
     async def run_full_analysis(
         self,
@@ -94,14 +101,14 @@ class AnalysisService:
         doc_names: list[str],
     ) -> AnalysisResult:
         """
-        Run the complete analysis pipeline — all 5 calls in parallel.
-        gpt-oss-120b is fast (2-5s) so parallel is safe and optimal.
+        Run the complete analysis pipeline.
+        Serialized using Semaphore to protect rate limits on free-tier API keys.
         """
         system_prompt = get_system_prompt(doc_names)
 
         logger.info(
             f"Starting full analysis for session {session_id} "
-            f"({len(chunks)} chunks, {len(doc_names)} documents) — 5 parallel LLM calls"
+            f"({len(chunks)} chunks, {len(doc_names)} documents) — serialized LLM calls"
         )
 
         if chunks:
@@ -120,23 +127,23 @@ class AnalysisService:
             conflicts_result,
         ) = await asyncio.gather(
             self._with_timeout(
-                self._generate_summary_and_questions(system_prompt, chunks),
+                self._sem_wrapped(self._generate_summary_and_questions(system_prompt, chunks)),
                 "summary+questions",
             ),
             self._with_timeout(
-                self._generate_risks(system_prompt, chunks),
+                self._sem_wrapped(self._generate_risks(system_prompt, chunks)),
                 "risks",
             ),
             self._with_timeout(
-                self._generate_comparison_matrix(system_prompt, chunks, doc_names),
+                self._sem_wrapped(self._generate_comparison_matrix(system_prompt, chunks, doc_names)),
                 "comparison_matrix",
             ),
             self._with_timeout(
-                self._generate_recommendation(system_prompt, chunks),
+                self._sem_wrapped(self._generate_recommendation(system_prompt, chunks)),
                 "recommendation",
             ),
             self._with_timeout(
-                self.conflict_engine.detect(chunks, doc_names),
+                self._sem_wrapped(self.conflict_engine.detect(chunks, doc_names)),
                 "conflicts",
             ),
             return_exceptions=True,
